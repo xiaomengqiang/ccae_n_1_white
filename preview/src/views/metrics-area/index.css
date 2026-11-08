@@ -1,0 +1,16 @@
+.metrics-area {
+  flex-shrink: 0;
+  height: 154px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-container-highest);
+  border-radius: var(--radius-container);
+  box-shadow: var(--shadow-card);
+}
+
+.metrics-area-name {
+  color: var(--on-surface-variant);
+  font: var(--font-headline-s);
+  font-weight: var(--font-weight-medium);
+}

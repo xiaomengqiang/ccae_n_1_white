@@ -1,7 +1,25 @@
-/* 应用级基础样式 — 页面根节点的 token 消费示例 */
+/* 应用级基础样式 — 页面整体布局骨架(Layer 5) */
 .app-root {
-  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   background: var(--surface-container-lowest);
   color: var(--on-surface);
   font: var(--font-body-m);
+}
+
+.app-body {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  gap: var(--spacing-section);
+  padding: var(--spacing-section);
 }

@@ -1,0 +1,15 @@
+.ai-panel {
+  flex-shrink: 0;
+  width: 484px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-container-highest);
+  border-right: 1px solid var(--divider);
+}
+
+.ai-panel-name {
+  color: var(--on-surface-variant);
+  font: var(--font-headline-s);
+  font-weight: var(--font-weight-medium);
+}

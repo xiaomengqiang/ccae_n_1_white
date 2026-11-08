@@ -1,0 +1,15 @@
+.top-nav {
+  flex-shrink: 0;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-container-highest);
+  border-bottom: 1px solid var(--divider);
+}
+
+.top-nav-name {
+  color: var(--on-surface-variant);
+  font: var(--font-headline-s);
+  font-weight: var(--font-weight-medium);
+}

@@ -15,6 +15,12 @@
 import { ConfigProvider, Empty } from "antd";
 import zhCN from "./assets/shared/antd-zh.js";
 import { AppProvider } from "./src/context.jsx";
+import TopNav from "./src/views/top-nav/index.jsx";
+import SideNav from "./src/views/side-nav/index.jsx";
+import AiPanel from "./src/views/ai-panel/index.jsx";
+import MetricsArea from "./src/views/metrics-area/index.jsx";
+import CabinetArea from "./src/views/cabinet-area/index.jsx";
+import TimelineArea from "./src/views/timeline-area/index.jsx";
 import "./app.css";
 
 export default function App() {
@@ -28,7 +34,16 @@ export default function App() {
         spin={{ indicator: <img src="./assets/uploads/loading.svg" alt="" className="custom-spin-indicator" /> }}
       >
         <div className="app-root">
-          {/* view mount point */}
+          <TopNav />
+          <div className="app-body">
+            <SideNav />
+            <AiPanel />
+            <div className="app-main">
+              <MetricsArea />
+              <CabinetArea />
+              <TimelineArea />
+            </div>
+          </div>
         </div>
       </ConfigProvider>
     </AppProvider>

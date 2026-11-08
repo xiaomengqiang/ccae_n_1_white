@@ -1,0 +1,16 @@
+.side-nav {
+  flex-shrink: 0;
+  width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-container-highest);
+  border-right: 1px solid var(--divider);
+}
+
+.side-nav-name {
+  writing-mode: vertical-rl;
+  letter-spacing: 0.25em;
+  color: var(--on-surface-variant);
+  font: var(--font-body-s);
+}

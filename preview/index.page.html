@@ -4127,12 +4127,136 @@ input.ant-input.ant-input-sm {
 }
 
 
-/* 应用级基础样式 — 页面根节点的 token 消费示例 */
+/* 应用级基础样式 — 页面整体布局骨架(Layer 5) */
 .app-root {
-  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   background: var(--surface-container-lowest);
   color: var(--on-surface);
   font: var(--font-body-m);
+}
+
+.app-body {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  gap: var(--spacing-section);
+  padding: var(--spacing-section);
+}
+
+
+.top-nav {
+  flex-shrink: 0;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-container-highest);
+  border-bottom: 1px solid var(--divider);
+}
+
+.top-nav-name {
+  color: var(--on-surface-variant);
+  font: var(--font-headline-s);
+  font-weight: var(--font-weight-medium);
+}
+
+
+.side-nav {
+  flex-shrink: 0;
+  width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-container-highest);
+  border-right: 1px solid var(--divider);
+}
+
+.side-nav-name {
+  writing-mode: vertical-rl;
+  letter-spacing: 0.25em;
+  color: var(--on-surface-variant);
+  font: var(--font-body-s);
+}
+
+
+.ai-panel {
+  flex-shrink: 0;
+  width: 484px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-container-highest);
+  border-right: 1px solid var(--divider);
+}
+
+.ai-panel-name {
+  color: var(--on-surface-variant);
+  font: var(--font-headline-s);
+  font-weight: var(--font-weight-medium);
+}
+
+
+.metrics-area {
+  flex-shrink: 0;
+  height: 154px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-container-highest);
+  border-radius: var(--radius-container);
+  box-shadow: var(--shadow-card);
+}
+
+.metrics-area-name {
+  color: var(--on-surface-variant);
+  font: var(--font-headline-s);
+  font-weight: var(--font-weight-medium);
+}
+
+
+.cabinet-area {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-container-highest);
+  border-radius: var(--radius-container);
+  box-shadow: var(--shadow-card);
+}
+
+.cabinet-area-name {
+  color: var(--on-surface-variant);
+  font: var(--font-headline-s);
+  font-weight: var(--font-weight-medium);
+}
+
+
+.timeline-area {
+  flex-shrink: 0;
+  height: 126px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-container-highest);
+  border-radius: var(--radius-container);
+  box-shadow: var(--shadow-card);
+}
+
+.timeline-area-name {
+  color: var(--on-surface-variant);
+  font: var(--font-headline-s);
+  font-weight: var(--font-weight-medium);
 }
 
 </style>
@@ -4459,11 +4583,89 @@ function useApp() {
   Object.assign(__export, { AppProvider, useApp });
 })();
 
+/* ===== src/views/top-nav/index.jsx ===== */
+(function () {
+function TopNav() {
+  return (
+    <header className="top-nav">
+      <span className="top-nav-name">顶部导航栏</span>
+    </header>
+  );
+}
+  Object.assign(__export, { TopNav });
+})();
+
+/* ===== src/views/side-nav/index.jsx ===== */
+(function () {
+function SideNav() {
+  return (
+    <nav className="side-nav">
+      <span className="side-nav-name">侧边导航栏</span>
+    </nav>
+  );
+}
+  Object.assign(__export, { SideNav });
+})();
+
+/* ===== src/views/ai-panel/index.jsx ===== */
+(function () {
+function AiPanel() {
+  return (
+    <aside className="ai-panel">
+      <span className="ai-panel-name">AI对话面板</span>
+    </aside>
+  );
+}
+  Object.assign(__export, { AiPanel });
+})();
+
+/* ===== src/views/metrics-area/index.jsx ===== */
+(function () {
+function MetricsArea() {
+  return (
+    <section className="metrics-area">
+      <span className="metrics-area-name">指标区域</span>
+    </section>
+  );
+}
+  Object.assign(__export, { MetricsArea });
+})();
+
+/* ===== src/views/cabinet-area/index.jsx ===== */
+(function () {
+function CabinetArea() {
+  return (
+    <section className="cabinet-area">
+      <span className="cabinet-area-name">机柜绘制区域</span>
+    </section>
+  );
+}
+  Object.assign(__export, { CabinetArea });
+})();
+
+/* ===== src/views/timeline-area/index.jsx ===== */
+(function () {
+function TimelineArea() {
+  return (
+    <section className="timeline-area">
+      <span className="timeline-area-name">时间轴区域</span>
+    </section>
+  );
+}
+  Object.assign(__export, { TimelineArea });
+})();
+
 /* ===== app.jsx ===== */
 (function () {
   const { ConfigProvider, Empty } = antd;
   const { AppProvider } = __export;
   const zhCN = __export.zhCN;
+  const TopNav = __export.TopNav;
+  const SideNav = __export.SideNav;
+  const AiPanel = __export.AiPanel;
+  const MetricsArea = __export.MetricsArea;
+  const CabinetArea = __export.CabinetArea;
+  const TimelineArea = __export.TimelineArea;
 // App entry — ICT React page
 // Layering convention (one folder per component, kebab-case + index.jsx/index.css):
 //   Layer 1 global state  → src/context.jsx        (AppProvider: global state + dark mode toggle)
@@ -4483,6 +4685,12 @@ function useApp() {
 
 
 
+
+
+
+
+
+
 function App() {
   return (
     <AppProvider>
@@ -4494,7 +4702,16 @@ function App() {
         spin={{ indicator: <img src="./assets/uploads/loading.svg" alt="" className="custom-spin-indicator" /> }}
       >
         <div className="app-root">
-          {/* view mount point */}
+          <TopNav />
+          <div className="app-body">
+            <SideNav />
+            <AiPanel />
+            <div className="app-main">
+              <MetricsArea />
+              <CabinetArea />
+              <TimelineArea />
+            </div>
+          </div>
         </div>
       </ConfigProvider>
     </AppProvider>
