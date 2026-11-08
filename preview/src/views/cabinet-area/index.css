@@ -2,15 +2,18 @@
   flex: 1 1 0;
   min-height: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
   background: var(--surface-container-highest);
   border-radius: var(--radius-container);
   box-shadow: var(--shadow-card);
+  overflow: hidden;
 }
 
-.cabinet-area-name {
-  color: var(--on-surface-variant);
-  font: var(--font-headline-s);
-  font-weight: var(--font-weight-medium);
+.cabinet-area-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
 }

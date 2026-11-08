@@ -1,0 +1,9 @@
+/* 应用级基础样式 — 3D 页面根布局(Layer 5) */
+.app-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--surface-container-lowest);
+  color: var(--on-surface);
+  font: var(--font-body-m);
+}

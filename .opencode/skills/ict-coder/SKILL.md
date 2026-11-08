@@ -156,6 +156,7 @@ node scripts/build.mjs --dir "{SCAFFOLD_DIR}"
 - `build.mjs` bundles all page source modules into one self-running `index.page.html` (local UMD libraries + Design Token CSS + antd skin + Lucide icons).
 - **WARN**: unknown icon names, hardcoded hex — safe to ignore.
 - **FAIL**: read the error, fix the source, re-run `build.mjs`.
+- **3D 页面(three.js)**:改用 `node scripts/build-3d.mjs --dir "{SCAFFOLD_DIR}"` — 在 build.mjs 基础上额外注入 `assets/library/three.min.js`(本地 UMD),并支持 `import THREE from "three"` / `import { X } from "three"`(构建期映射为 `window.THREE` 全局)。前提:脚手架 `assets/library/` 下已放置 three.min.js,缺失则构建 FAIL。差异明细见 build-3d.mjs 文件头注释。
 
 ## Step 4 — Verify (MANDATORY)
 
