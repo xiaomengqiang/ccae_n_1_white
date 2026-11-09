@@ -1,0 +1,19 @@
+# 依赖(本工程脚本零依赖,预防性忽略)
+node_modules/
+
+# 工具私有目录
+.octo/
+
+# 操作系统杂项
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器/IDE
+.vscode/
+.idea/
+*.swp
+
+# 日志
+*.log
+npm-debug.log*
