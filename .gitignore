@@ -4,6 +4,10 @@ node_modules/
 # 工具私有目录
 .octo/
 
+# VS Code Local History 插件产物
+preview/.history/
+preview-3d/.history/
+
 # 操作系统杂项
 .DS_Store
 Thumbs.db
