@@ -1,16 +1,259 @@
+/* 指标卡 · 1:1:原稿 PNG absolute 到画布 (554,72,1342×154) + 文字叠加 */
 .metrics-area {
-  flex-shrink: 0;
+  position: absolute;
+  left: 554px;
+  top: 72px;
+  width: 1342px;
   height: 154px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-container-highest);
-  border-radius: var(--radius-container);
-  box-shadow: var(--shadow-card);
 }
 
-.metrics-area-name {
-  color: var(--on-surface-variant);
-  font: var(--font-headline-s);
-  font-weight: var(--font-weight-medium);
+.mt-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  user-select: none;
+}
+
+.mt-t {
+  position: absolute;
+  white-space: nowrap;
+  font-family: var(--font-family);
+}
+
+/* ==================== S02 业务视图展开态(第14轮第1批) ==================== */
+/* 入口热区(home 态点击训练/推理) */
+.mx-entry-hot {
+  position: absolute;
+  border: none;
+  padding: 0;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 200ms ease-out;
+  z-index: 5;
+}
+
+.mx-entry-hot:hover {
+  background: rgba(0, 103, 209, 0.04);
+}
+
+/* 展开态三段容器(绝对铺满指标卡,内边距 20/32) */
+.mx-expand-wrap {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 32px;
+  box-sizing: border-box;
+  animation: mx-fade-in 200ms ease-out;
+}
+
+@keyframes mx-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mx-sep {
+  flex-shrink: 0;
+  align-self: center;
+  width: 1px;
+  height: 114px;
+  background: #dfdfdf;
+  opacity: 0.65;
+}
+
+/* —— 收起摘要段(宽 156) —— */
+.mx-collapsed {
+  width: 156px;
+  flex-shrink: 0;
+  height: 100%;
+  max-height: 114px;
+  overflow: visible;
+  position: relative;
+  padding-top: 20px;
+  box-sizing: border-box;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 200ms ease-out;
+}
+
+.mx-collapsed .mt-t {
+  top: 20px;
+}
+
+.mx-collapsed:hover {
+  background: rgba(0, 103, 209, 0.03);
+}
+
+.mx-collapsed-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 62px;
+
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.mx-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 24px);
+  grid-auto-rows: 24px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* 小图标 24×24:img 与托同尺寸重叠(图片自带内容居中) */
+.mx-mini {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.mx-mini img {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.mx-collapsed-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.mx-collapsed-line1 {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 500;
+  color: #191919;
+}
+
+.mx-collapsed-line1 b {
+  font-weight: 500;
+}
+
+.mx-num-green {
+  color: #09aa71;
+}
+
+.mx-num-red {
+  color: #e02128;
+}
+
+.mx-unit-red {
+  font-style: normal;
+  font-size: 12px;
+  line-height: 20px;
+  color: #e02128;
+  margin-left: 6px;
+}
+
+.mx-collapsed-line2 {
+  font-size: 12px;
+  line-height: 20px;
+  color: #777;
+  white-space: nowrap;
+}
+
+/* —— 展开段(宽 886,标题 + 5 指标块) —— */
+.mx-expanded {
+  width: 886px;
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
+  box-sizing: border-box;
+  animation: mx-width-in 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes mx-width-in {
+  from { flex: 0 0 156px; opacity: 0.4; }
+  to { flex: 1 1 0; opacity: 1; }
+}
+
+.mx-blocks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 62px;
+
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mx-block {
+  position: relative;
+  width: 148px;
+  height: 72px;
+  padding: 0 8px;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background-color 200ms ease-out, border-color 200ms ease-out;
+}
+
+.mx-block:hover {
+  background: #f5f7fa;
+}
+
+.mx-block-selected {
+  background: #e6f2fd;
+  border-color: #0067d1;
+}
+
+/* 大图标 40×40:img 与托同尺寸重叠(图片自带内容居中) */
+.mx-block-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.mx-block-icon img {
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+
+.mx-block-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mx-block-label {
+  font-size: 12px;
+  line-height: 20px;
+  color: #777;
+}
+
+.mx-block-value {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 700;
+  color: #191919;
+  font-variant-numeric: tabular-nums;
 }

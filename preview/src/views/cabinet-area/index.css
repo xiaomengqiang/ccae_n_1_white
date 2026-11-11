@@ -1,11 +1,11 @@
+/* 机柜区 · 1:1:3D 视口流内铺满;标题/时间/工具条画布绝对定位(app-root 为包含块) */
+
+/* 3D 视口:flex 流内占满机柜区(画布 548,259,1356×647) */
 .cabinet-area {
+  position: relative;
   flex: 1 1 0;
   min-height: 0;
-  display: flex;
-  background: var(--surface-container-highest);
-  border-radius: var(--radius-container);
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .cabinet-area-frame {
@@ -13,7 +13,194 @@
   width: 100%;
   height: 100%;
   border: none;
-  flex: 1 1 0;
-  min-width: 0;
-  min-height: 0;
+}
+
+/* 标题:文字框左上角 (556,263),16px 字重 600 */
+.cabinet-area-title {
+  position: absolute;
+  left: 556px;
+  top: 263px;
+  color: #1f2329;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* 时间:13px,墨迹右缘对齐 x1893(right 27px),墨迹顶 y270 */
+.cabinet-area-time {
+  position: absolute;
+  right: 27px;
+  top: 270px;
+  color: #6b707a;
+  font-size: 13px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* 工具条原稿 PNG(含阴影外扩,面板本体 1848–1888 / 708–907) */
+.cabinet-toolbar {
+  position: absolute;
+  left: 1839px;
+  top: 655px;
+  width: 58px;
+  height: 263.5px;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* 图内缺失的刷新图标:14×14 @ (1861,723.66) #777 */
+.cabinet-toolbar-refresh {
+  position: absolute;
+  left: 1861px;
+  top: 723.66px;
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* 图内缺失的「100%」:11/18 Regular #777 @ (1855.5,879) */
+.cabinet-toolbar-zoom {
+  position: absolute;
+  left: 1855.5px;
+  top: 879px;
+  color: #777;
+  font-size: 11px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* 透明热区:28×28,保留 hover/点击 */
+.cabinet-toolbar-hot {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+/* ==================== 第11轮 2.5 交互(默认静态不变) ==================== */
+/* 全屏:覆盖右侧主区 x548–1904 / y48–1080 */
+.cabinet-area-fullscreen {
+  position: absolute;
+  left: 532px;
+  top: 48px;
+  width: 1388px;
+  height: 1032px;
+  z-index: 190;
+}
+
+/* 背景出血层:与 3D viewport 同款渐变,向左右各延 16px(x532–1920),消除灰盒缝隙 */
+.cabinet-bg-bleed {
+  position: absolute;
+  left: -16px;
+  right: -16px;
+  top: 0;
+  bottom: 0;
+  background:
+    radial-gradient(ellipse 420px 260px at 78% 92%, rgba(232, 232, 232, 0.9), rgba(232, 232, 232, 0) 70%),
+    linear-gradient(
+      180deg,
+      #f3f3f3 0%,
+      #ededed 5.5%,
+      #e0e0df 78%,
+      #e7e7e7 88%,
+      #eaeaea 91.5%,
+      #eeeeee 94%,
+      #f2f2f2 97%,
+      #f3f3f3 100%
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cabinet-area-frame {
+  position: relative;
+  z-index: 1;
+}
+
+/* 退出全屏按钮:白底圆角 6,12px #191919,带缩小图标(位于时间左侧) */
+.cabinet-exit-fullscreen {
+  position: absolute;
+  right: 160px;
+  top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #191919;
+  font-family: var(--font-family);
+  font-size: 12px;
+  cursor: pointer;
+  z-index: 5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.cabinet-exit-fullscreen:hover {
+  background: #f3f4f6;
+}
+
+/* 全屏时工具条/叠加层保持在视口之上可用 */
+.cabinet-toolbar,
+.cabinet-toolbar-refresh,
+.cabinet-toolbar-zoom,
+.cabinet-toolbar-hot,
+.cabinet-area-title,
+.cabinet-area-time {
+  z-index: 200;
+}
+
+/* 热区:hover 圆形浅底 + 左侧深色 tooltip */
+.cabinet-toolbar-hot {
+  border-radius: 50%;
+}
+
+.cabinet-toolbar-hot:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.cabinet-toolbar-hot::after {
+  content: attr(data-tip);
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #1f2329;
+  color: #ffffff;
+  font-family: var(--font-family);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease-out;
+}
+
+.cabinet-toolbar-hot:hover::after {
+  opacity: 1;
+}
+
+/* 刷新图标叠加层可点 */
+.cabinet-toolbar-refresh {
+  pointer-events: auto;
 }

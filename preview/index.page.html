@@ -4128,10 +4128,30 @@ input.ant-input.ant-input-sm {
 
 
 /* 应用级基础样式 — 页面整体布局骨架(Layer 5) */
+/* 大屏等比缩放壳:视口铺满 + 页面灰留白 + 画布居中 */
+.app-shell {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #f3f3f3;
+}
+
+.dark .app-shell {
+  background: var(--surface-container-lowest);
+}
+
+/* 设计画布:固定 1920×1080,整体 scale(由 App 的 resize 监听注入),布局恒定 */
 .app-root {
+  width: 1920px;
+  height: 1080px;
+  flex: none;
+  overflow: hidden;
+  transform-origin: center center;
   display: flex;
   flex-direction: column;
-  height: 100vh;
   background: var(--surface-container-lowest);
   color: var(--on-surface);
   font: var(--font-body-m);
@@ -4143,95 +4163,985 @@ input.ant-input.ant-input-sm {
   min-height: 0;
 }
 
+/* 主区域:浅灰 #F0F1F4 底,内容与页面边缘 16px 间距(顶部 24px) */
 .app-main {
   display: flex;
   flex-direction: column;
   flex: 1 1 0;
   min-width: 0;
   min-height: 0;
-  gap: var(--spacing-section);
-  padding: var(--spacing-section);
+  gap: 16px;
+  padding: 24px 16px 16px;
+  background: #f3f3f3;
 }
 
+.dark .app-main {
+  background: var(--surface-container-lowest);
+}
 
-.top-nav {
+/* 指标卡/时间轴 absolute 到画布后的 flex 占位(卡高 + 下侧 gap) */
+.metrics-ph {
   flex-shrink: 0;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-container-highest);
-  border-bottom: 1px solid var(--divider);
+  height: 170px;
 }
 
-.top-nav-name {
-  color: var(--on-surface-variant);
-  font: var(--font-headline-s);
-  font-weight: var(--font-weight-medium);
+.timeline-ph {
+  flex-shrink: 0;
+  height: 142px;
+}
+
+/* S02:3D 机柜区淡出/淡入(home↔业务视图;iframe 保留 DOM) */
+.cabinet-fade {
+  display: contents; /* 完全透明包裹:不产生盒、不做定位父级 */
+  opacity: 1;
+  transition: none;
+}
+
+/* 淡出改作用于 .cabinet-area 本体(其 position 已是 relative,视觉下移不改变它作为绝对定位上下文?——cabinet-area 内无画布级 absolute 子元素,标题/时间/工具条在它外面) */
+.cabinet-fade-hidden .cabinet-area {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.cabinet-fade-hidden .cabinet-bg-bleed,
+.cabinet-fade-hidden .cabinet-area-title,
+.cabinet-fade-hidden .cabinet-area-time,
+.cabinet-fade-hidden .cabinet-toolbar,
+.cabinet-fade-hidden .cabinet-toolbar-refresh,
+.cabinet-fade-hidden .cabinet-toolbar-zoom,
+.cabinet-fade-hidden .cabinet-toolbar-hot {
+  opacity: 0;
+  pointer-events: none;
 }
 
 
+/* 顶部导航 · 1:1:整条原稿 PNG(0,0,1920×49) + 白字与透明热区 */
+.top-nav {
+  position: relative;
+  flex-shrink: 0;
+  height: 49px;
+}
+
+.tn-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  user-select: none;
+}
+
+/* 「智能模式」:图内不含文字,12/20 Medium #FFF @ (257,14) */
+.tn-mode-text {
+  position: absolute;
+  left: 257px;
+  top: 14px;
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 500;
+  color: #ffffff;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* 透明热区:保留 hover/点击,不画可见图形 */
+.tn-hot {
+  position: absolute;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+/* 深色主题轻提示(第3批 C:不切换主题) */
+.tn-theme-tip {
+  position: absolute;
+  left: 1739px;
+  top: 40px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #1f2329;
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  animation: tn-tip-in 200ms ease-out;
+  z-index: 20;
+}
+
+@keyframes tn-tip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* 左侧图标栏 · 1:1:白底 + 右侧 1px 边线,图标为原稿 PNG 绝对定位 */
 .side-nav {
+  position: relative;
   flex-shrink: 0;
   width: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: var(--surface-container-highest);
-  border-right: 1px solid var(--divider);
+  border-right: 1px solid #e2e2e2;
 }
 
-.side-nav-name {
-  writing-mode: vertical-rl;
-  letter-spacing: 0.25em;
-  color: var(--on-surface-variant);
-  font: var(--font-body-s);
+.side-nav img {
+  position: absolute;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 
+/* AI 对话面板(算小维)— 1:1 还原:Figma 原稿资产层 + 绝对坐标文字层
+   面板区域画布 x48→532 y48→1080;内部坐标 = 画布坐标 − (48,48) */
 .ai-panel {
+  position: relative;
   flex-shrink: 0;
   width: 484px;
+}
+
+/* 资产图层:绝对定位 img,按原稿 1x 尺寸显示 */
+.ai-art {
+  position: absolute;
+  display: block;
+  user-select: none;
+}
+
+/* 文字层:绝对定位,字号/行高/字重/颜色由内联样式按原稿表注入 */
+.ai-t {
+  position: absolute;
+  white-space: nowrap;
+  font-family: var(--font-family);
+}
+
+/* 守护效果正文:固定两行 nowrap,共用同一固定宽度渐变(background-clip:text) */
+.ai-guard-text {
+  position: absolute;
+  display: block;
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ai-guard-text span {
+  display: block;
+  white-space: nowrap;
+}
+
+/* 正文数字强调色 */
+.ai-panel .c-red {
+  color: #e02128;
+  font-weight: 500;
+}
+
+.ai-panel .c-gray {
+  color: #aeaeae;
+  font-weight: 500;
+}
+
+.ai-panel .c-gray {
+  color: #aeaeae;
+  font-weight: 500;
+}
+
+/* 「仅显示影响业务事件」复选框:16×16 白底 + 1px #939393 边,圆角 2px */
+.ai-check {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #939393;
+  border-radius: 2px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+/* 底部输入框(第1批修正):按用户精确规格全新落位,规避旧规则
+   框体画布 (68,1012,444×48) → 面板内 (20,964);input 左内边距 18、
+   宽 444−18−48,垂直居中高 22;发送热区 = 框体右缘向左 44 起 40×40 圆 */
+.ai-input2 {
+  position: absolute;
+  left: 38px;
+  top: 977px;
+  width: 378px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 22px;
+  color: #191919;
+  z-index: 5;
+}
+
+.ai-input2::placeholder {
+  color: #aeaeae;
+}
+
+.ai-input-send-hot {
+  position: absolute;
+  left: 420px;
+  top: 968px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  padding: 0;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 6;
+}
+
+.ai-input-send-hot:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* ==================== 第11轮交互层(默认静态与截图一致,只加状态) ==================== */
+/* 统一动效 200ms ease-out;可点元素 cursor:pointer */
+
+/* 「近一天」热区与下拉 */
+.ai-range-btn {
+  position: absolute;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.ai-range-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.ai-dropdown-mask {
+  position: absolute;
+  left: -48px;
+  top: -48px;
+  width: 1920px;
+  height: 1080px;
+  z-index: 60;
+}
+
+.ai-dropdown {
+  position: absolute;
+  top: 40px;
+  width: 118px;
+  padding: 4px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(40, 60, 120, 0.14);
+  z-index: 61;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-dropdown-item {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: var(--surface-container-highest);
-  border-right: 1px solid var(--divider);
+  justify-content: space-between;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #191919;
+  font-family: var(--font-family);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 200ms ease-out;
 }
 
-.ai-panel-name {
-  color: var(--on-surface-variant);
-  font: var(--font-headline-s);
-  font-weight: var(--font-weight-medium);
+.ai-dropdown-item:hover {
+  background: rgba(0, 103, 209, 0.05);
 }
 
+.ai-dropdown-item-active {
+  color: #0067d1;
+  font-weight: 500;
+}
 
-.metrics-area {
-  flex-shrink: 0;
-  height: 154px;
-  display: flex;
+/* 卡片右上 ^ 箭头热区:hover 圆形浅灰底(折叠功能后续轮次) */
+.ai-fold-hot {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: none;
+  padding: 0;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 200ms ease-out;
+}
+
+.ai-fold-hot:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* 复选框:点击切换勾选(勾选 = #0067D1 底 + 白勾) */
+.ai-check {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #939393;
+  border-radius: 2px;
+  background: #ffffff;
+  box-sizing: border-box;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface-container-highest);
-  border-radius: var(--radius-container);
-  box-shadow: var(--shadow-card);
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 150ms ease-out, border-color 150ms ease-out;
 }
 
-.metrics-area-name {
-  color: var(--on-surface-variant);
-  font: var(--font-headline-s);
-  font-weight: var(--font-weight-medium);
+.ai-check-on {
+  background: #0067d1;
+  border-color: #0067d1;
 }
 
+/* 「查看全部」:hover 下划线 */
+.ai-events-link {
+  position: absolute;
+  color: #0067d1;
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 22px;
+  cursor: pointer;
+}
 
-.cabinet-area {
+.ai-events-link:hover {
+  text-decoration: underline;
+}
+
+/* 分段控件:CSS 选中胶囊 + 透明热区 */
+.ai-seg-pill {
+  position: absolute;
+  width: 204px;
+  height: 30px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 6px rgba(70, 90, 140, 0.15);
+  pointer-events: none;
+  transition: left 200ms ease-out;
+  box-sizing: border-box;
+}
+
+.ai-seg-hot {
+  position: absolute;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 15px;
+}
+
+/* 事件条目:整行 hover/选中;非影响条目淡出 */
+.ai-event-row {
+  position: absolute;
+  width: 428px;
+  height: 66px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 150ms ease-out, background-color 200ms ease-out;
+}
+
+.ai-event-row:hover {
+  background: rgba(0, 103, 209, 0.04);
+}
+
+.ai-event-row:hover .ai-t {
+  color: #0067d1;
+}
+
+.ai-event-row:hover .ai-t[color] {
+  /* 时间保持灰 */
+}
+
+.ai-event-selected {
+  background: rgba(0, 103, 209, 0.04);
+}
+
+.ai-event-selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 1px;
+  background: #0067d1;
+}
+
+.ai-event-dimmed {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ai-event-auto .ai-t:first-of-type {
+  color: #191919;
+}
+
+/* 自动处理中:橙色旋转圆环(1.5s/圈) */
+.ai-orbit {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: #ff8a3d;
+  border-right-color: #ffb38a;
+  animation: ai-orbit-spin 1.5s linear infinite;
+}
+
+@keyframes ai-orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 算小维回答卡:输入框正上方,白底圆角12,最大高 280 */
+.ai-answer-card {
+  position: absolute;
+  left: 20px;
+  bottom: 74px;
+  width: 444px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 14px 36px 14px 16px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(40, 60, 120, 0.12);
+  box-sizing: border-box;
+  z-index: 50;
+}
+
+.ai-answer-close {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ai-answer-close:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.ai-answer-q {
+  color: #191919;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.ai-answer-thinking {
+  color: #777;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.ai-dot {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin: 0 2px;
+  border-radius: 50%;
+  background: #777;
+  animation: ai-dot-bounce 0.9s ease-in-out infinite;
+}
+
+.ai-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.ai-answer-thinking .ai-dot:nth-of-type(2) {
+  animation-delay: 0.15s;
+}
+
+.ai-answer-thinking .ai-dot:nth-of-type(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes ai-dot-bounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+.ai-answer-text {
+  color: #555555;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.ai-answer-locate {
+  display: inline-block;
+  margin-left: 6px;
+  color: #0067d1;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ai-answer-locate:hover {
+  text-decoration: underline;
+}
+
+/* 「查看全部」抽屉:画布右侧 480×1080(面板内偏移定位),遮罩盖全画布 */
+.ai-drawer-mask {
+  position: absolute;
+  left: -48px;
+  top: -48px;
+  background: rgba(0, 0, 0, 0.25);
+  width: 1920px;
+  height: 1080px;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 90;
+  animation: ai-fade-in 200ms ease-out;
+}
+
+.ai-drawer {
+  position: absolute;
+  left: 1392px;
+  top: -48px;
+  width: 480px;
+  height: 1080px;
+  background: #ffffff;
+  box-shadow: -8px 0 24px rgba(40, 60, 120, 0.12);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  animation: ai-drawer-in 200ms ease-out;
+}
+
+@keyframes ai-drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes ai-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ai-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 12px;
+}
+
+.ai-drawer-title {
+  color: #191919;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+}
+
+.ai-drawer-close {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ai-drawer-close:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.ai-drawer-list {
   flex: 1 1 0;
   min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0 24px;
+  list-style: none;
+}
+
+.ai-drawer-item {
+  padding: 14px 0;
+}
+
+.ai-drawer-item + .ai-drawer-item {
+  border-top: 1px solid #eef0f5;
+}
+
+.ai-drawer-item-top {
   display: flex;
-  background: var(--surface-container-highest);
-  border-radius: var(--radius-container);
-  box-shadow: var(--shadow-card);
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ai-drawer-item-title {
+  color: #191919;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+}
+
+.ai-drawer-item-time {
+  margin-top: 4px;
+  color: #777;
+  font-size: 12px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 状态标签:待人工(红) / 自动处理中(蓝) / 已闭环(灰绿) */
+.ai-status-tag {
+  flex-shrink: 0;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.ai-status-tag-待人工 {
+  background: #fdecec;
+  color: #e02128;
+}
+
+.ai-status-tag-自动处理中 {
+  background: #eaf1ff;
+  color: #0067d1;
+}
+
+.ai-status-tag-已闭环 {
+  background: #eef7f2;
+  color: #09aa71;
+}
+
+/* 事件红三角图标(DOM,替代 panel-art 内绘制):18×16,行内 (1,2) */
+.ai-event-alert {
+  position: absolute;
+  left: 1px;
+  top: 2px;
+  width: 18px;
+  height: 16px;
+  pointer-events: none;
+}
+
+/* 事件分割线(DOM):x 面板 60→456,位于两条事件之间 */
+.ai-event-divider {
+  position: absolute;
+  left: 32px;
+  top: 59px;
+  width: 396px;
+  height: 1px;
+  background: #dfdfdf;
+  pointer-events: none;
+}
+
+
+/* 指标卡 · 1:1:原稿 PNG absolute 到画布 (554,72,1342×154) + 文字叠加 */
+.metrics-area {
+  position: absolute;
+  left: 554px;
+  top: 72px;
+  width: 1342px;
+  height: 154px;
+}
+
+.mt-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  user-select: none;
+}
+
+.mt-t {
+  position: absolute;
+  white-space: nowrap;
+  font-family: var(--font-family);
+}
+
+/* ==================== S02 业务视图展开态(第14轮第1批) ==================== */
+/* 入口热区(home 态点击训练/推理) */
+.mx-entry-hot {
+  position: absolute;
+  border: none;
+  padding: 0;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 200ms ease-out;
+  z-index: 5;
+}
+
+.mx-entry-hot:hover {
+  background: rgba(0, 103, 209, 0.04);
+}
+
+/* 展开态三段容器(绝对铺满指标卡,内边距 20/32) */
+.mx-expand-wrap {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 32px;
+  box-sizing: border-box;
+  animation: mx-fade-in 200ms ease-out;
+}
+
+@keyframes mx-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mx-sep {
+  flex-shrink: 0;
+  align-self: center;
+  width: 1px;
+  height: 114px;
+  background: #dfdfdf;
+  opacity: 0.65;
+}
+
+/* —— 收起摘要段(宽 156) —— */
+.mx-collapsed {
+  width: 156px;
+  flex-shrink: 0;
+  height: 100%;
+  max-height: 114px;
+  overflow: visible;
+  position: relative;
+  padding-top: 20px;
+  box-sizing: border-box;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 200ms ease-out;
+}
+
+.mx-collapsed .mt-t {
+  top: 20px;
+}
+
+.mx-collapsed:hover {
+  background: rgba(0, 103, 209, 0.03);
+}
+
+.mx-collapsed-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 62px;
+
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.mx-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 24px);
+  grid-auto-rows: 24px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* 小图标 24×24:img 与托同尺寸重叠(图片自带内容居中) */
+.mx-mini {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
+}
+
+.mx-mini img {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.mx-collapsed-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.mx-collapsed-line1 {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 500;
+  color: #191919;
+}
+
+.mx-collapsed-line1 b {
+  font-weight: 500;
+}
+
+.mx-num-green {
+  color: #09aa71;
+}
+
+.mx-num-red {
+  color: #e02128;
+}
+
+.mx-unit-red {
+  font-style: normal;
+  font-size: 12px;
+  line-height: 20px;
+  color: #e02128;
+  margin-left: 6px;
+}
+
+.mx-collapsed-line2 {
+  font-size: 12px;
+  line-height: 20px;
+  color: #777;
+  white-space: nowrap;
+}
+
+/* —— 展开段(宽 886,标题 + 5 指标块) —— */
+.mx-expanded {
+  width: 886px;
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
+  box-sizing: border-box;
+  animation: mx-width-in 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes mx-width-in {
+  from { flex: 0 0 156px; opacity: 0.4; }
+  to { flex: 1 1 0; opacity: 1; }
+}
+
+.mx-blocks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 62px;
+
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mx-block {
+  position: relative;
+  width: 148px;
+  height: 72px;
+  padding: 0 8px;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background-color 200ms ease-out, border-color 200ms ease-out;
+}
+
+.mx-block:hover {
+  background: #f5f7fa;
+}
+
+.mx-block-selected {
+  background: #e6f2fd;
+  border-color: #0067d1;
+}
+
+/* 大图标 40×40:img 与托同尺寸重叠(图片自带内容居中) */
+.mx-block-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.mx-block-icon img {
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+
+.mx-block-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mx-block-label {
+  font-size: 12px;
+  line-height: 20px;
+  color: #777;
+}
+
+.mx-block-value {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 700;
+  color: #191919;
+  font-variant-numeric: tabular-nums;
+}
+
+
+/* 机柜区 · 1:1:3D 视口流内铺满;标题/时间/工具条画布绝对定位(app-root 为包含块) */
+
+/* 3D 视口:flex 流内占满机柜区(画布 548,259,1356×647) */
+.cabinet-area {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: visible;
 }
 
 .cabinet-area-frame {
@@ -4239,27 +5149,2025 @@ input.ant-input.ant-input-sm {
   width: 100%;
   height: 100%;
   border: none;
-  flex: 1 1 0;
-  min-width: 0;
-  min-height: 0;
+}
+
+/* 标题:文字框左上角 (556,263),16px 字重 600 */
+.cabinet-area-title {
+  position: absolute;
+  left: 556px;
+  top: 263px;
+  color: #1f2329;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* 时间:13px,墨迹右缘对齐 x1893(right 27px),墨迹顶 y270 */
+.cabinet-area-time {
+  position: absolute;
+  right: 27px;
+  top: 270px;
+  color: #6b707a;
+  font-size: 13px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* 工具条原稿 PNG(含阴影外扩,面板本体 1848–1888 / 708–907) */
+.cabinet-toolbar {
+  position: absolute;
+  left: 1839px;
+  top: 655px;
+  width: 58px;
+  height: 263.5px;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* 图内缺失的刷新图标:14×14 @ (1861,723.66) #777 */
+.cabinet-toolbar-refresh {
+  position: absolute;
+  left: 1861px;
+  top: 723.66px;
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* 图内缺失的「100%」:11/18 Regular #777 @ (1855.5,879) */
+.cabinet-toolbar-zoom {
+  position: absolute;
+  left: 1855.5px;
+  top: 879px;
+  color: #777;
+  font-size: 11px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* 透明热区:28×28,保留 hover/点击 */
+.cabinet-toolbar-hot {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+/* ==================== 第11轮 2.5 交互(默认静态不变) ==================== */
+/* 全屏:覆盖右侧主区 x548–1904 / y48–1080 */
+.cabinet-area-fullscreen {
+  position: absolute;
+  left: 532px;
+  top: 48px;
+  width: 1388px;
+  height: 1032px;
+  z-index: 190;
+}
+
+/* 背景出血层:与 3D viewport 同款渐变,向左右各延 16px(x532–1920),消除灰盒缝隙 */
+.cabinet-bg-bleed {
+  position: absolute;
+  left: -16px;
+  right: -16px;
+  top: 0;
+  bottom: 0;
+  background:
+    radial-gradient(ellipse 420px 260px at 78% 92%, rgba(232, 232, 232, 0.9), rgba(232, 232, 232, 0) 70%),
+    linear-gradient(
+      180deg,
+      #f3f3f3 0%,
+      #ededed 5.5%,
+      #e0e0df 78%,
+      #e7e7e7 88%,
+      #eaeaea 91.5%,
+      #eeeeee 94%,
+      #f2f2f2 97%,
+      #f3f3f3 100%
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cabinet-area-frame {
+  position: relative;
+  z-index: 1;
+}
+
+/* 退出全屏按钮:白底圆角 6,12px #191919,带缩小图标(位于时间左侧) */
+.cabinet-exit-fullscreen {
+  position: absolute;
+  right: 160px;
+  top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #191919;
+  font-family: var(--font-family);
+  font-size: 12px;
+  cursor: pointer;
+  z-index: 5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.cabinet-exit-fullscreen:hover {
+  background: #f3f4f6;
+}
+
+/* 全屏时工具条/叠加层保持在视口之上可用 */
+.cabinet-toolbar,
+.cabinet-toolbar-refresh,
+.cabinet-toolbar-zoom,
+.cabinet-toolbar-hot,
+.cabinet-area-title,
+.cabinet-area-time {
+  z-index: 200;
+}
+
+/* 热区:hover 圆形浅底 + 左侧深色 tooltip */
+.cabinet-toolbar-hot {
+  border-radius: 50%;
+}
+
+.cabinet-toolbar-hot:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.cabinet-toolbar-hot::after {
+  content: attr(data-tip);
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #1f2329;
+  color: #ffffff;
+  font-family: var(--font-family);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease-out;
+}
+
+.cabinet-toolbar-hot:hover::after {
+  opacity: 1;
+}
+
+/* 刷新图标叠加层可点 */
+.cabinet-toolbar-refresh {
+  pointer-events: auto;
 }
 
 
+/* 集群保障时间轴 · 1:1 还原
+   卡片画布区域 (556,929,1340×126):absolute 定位到 1920×1080 画布(app-root) */
 .timeline-area {
-  flex-shrink: 0;
+  position: absolute;
+  left: 556px;
+  top: 929px;
+  width: 1340px;
   height: 126px;
+}
+
+/* 资产图层 */
+.timeline-area .tl-img {
+  position: absolute;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* 通用文字:绝对定位 */
+.tl-t {
+  position: absolute;
+  white-space: nowrap;
+  font-family: var(--font-family);
+  font-size: 12px;
+  line-height: 20px;
+  color: #777;
+}
+
+/* 图例:图标 16×16 + 文字 */
+.tl-lg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tl-lg img {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+/* 图例组间分隔线:1px × 14px */
+.tl-sep {
+  position: absolute;
+  width: 1px;
+  height: 14px;
+  background: #dadde3;
+}
+
+/* 时间刻度:宽 56 居中于刻度点 */
+.tl-tick {
+  width: 56px;
+  text-align: center;
+}
+
+/* 当前时间:白色文字叠在 tl-now 蓝标签上 */
+.tl-now-text {
+  width: 56px;
+  text-align: center;
+  color: #ffffff;
+}
+
+/* 右侧时钟图标 */
+.tl-clock-svg {
+  position: absolute;
+  display: block;
+}
+
+/* —— 事件胶囊交互(第3批 B;默认静态不变) —— */
+.tl-event-hot {
+  position: absolute;
+  cursor: pointer;
+}
+
+.tl-event-hot .tl-event-pill {
+  transition: transform 200ms ease-out, filter 200ms ease-out;
+}
+
+.tl-event-hot:hover .tl-event-pill {
+  transform: translateY(-2px);
+  filter: drop-shadow(0 6px 14px rgba(40, 60, 120, 0.25));
+}
+
+.tl-event-tip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tl-event-hot:hover .tl-event-tip {
+  display: flex;
+}
+
+.tl-event-tip-title {
+  color: #191919;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.tl-event-tip-sub {
+  color: #777;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+
+.tl-event-closed-circle {
+  position: absolute;
+  left: 18px;
+  top: 19px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #8a8f99;
+}
+
+.tl-event-closed-circle::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 9px solid #ffffff;
+  transform: translateY(-2px);
+}
+
+.tl-event-closed-badge {
+  position: absolute;
+  right: -4px;
+  top: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #8a8f99;
+}
+
+/* 已闭环胶囊(D-08 恢复后):灰三角 + 灰圆白三角 + 对勾徽标;主体与原胶囊同位 */
+.tl-closed-pill {
+  position: absolute;
+  left: 0;
+  top: 12.55px; /* 与原胶囊主体(胶囊底边 y59.15 对齐轨道)同高 */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 10px;
+  background: #ffffff;
+  border: 1px solid #e6e8ee;
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(80, 90, 160, 0.06);
+}
+
+/* 左圆:白底圆托 + 14px 灰线框三角(与 12:00 组灰三角一致) */
+.tl-closed-tri-wrap {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f2f3f5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tl-closed-circle {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #8a8f99;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tl-closed-mini-tri {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 9px solid #ffffff;
+  margin-top: -2px;
+}
+
+.tl-closed-badge {
+  position: absolute;
+  top: -8px;
+  right: -9px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #8a8f99;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tl-closed-badge img {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+
+/* S02 业务视图主区(浏览导航 + 卡片列表);home 时由父级隐藏 */
+.wl-root {
+  position: absolute;
+  left: 555.5px;
+  top: 250px;
+  width: 1332px;
+  z-index: 30;
+  animation: wl-in 250ms ease-out 80ms both;
+}
+
+@keyframes wl-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* —— 浏览导航(555.5,250,1332×56) —— */
+.wl-nav {
+  position: relative;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #dfdfdf;
+  border-radius: 8px;
+}
+
+.wl-sort {
+  width: 128px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: #191919;
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.wl-sort-caret {
+  font-size: 16px;
+  color: #191919;
+  line-height: 1;
+}
+
+.wl-sort:hover {
+  background: #f5f7fa;
+}
+
+.wl-sort-menu {
+  position: absolute;
+  left: 12px;
+  top: 52px;
+  min-width: 168px;
+  padding: 4px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(40, 60, 120, 0.14);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.wl-sort-item {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #191919;
+  font-family: var(--font-family);
+  font-size: 13px;
+  line-height: 20px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.wl-sort-item:hover {
+  background: rgba(0, 103, 209, 0.05);
+}
+
+.wl-sort-item-on {
+  color: #0067d1;
+  font-weight: 500;
+}
+
+.wl-nav-sep {
+  flex-shrink: 0;
+  width: 1px;
+  height: 28px;
+  background: #dfdfdf;
+}
+
+/* 状态条区包裹(玻璃框定位上下文) */
+.wl-bars-wrap {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+/* 状态短条区 */
+.wl-bars {
+  position: relative;
+  z-index: 1; /* 短条在玻璃框之上,保持清晰满色 */
+  flex: 1 1 0;
+  min-width: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 3px;
+  overflow: hidden;
+}
+
+.wl-bar {
+  flex: 1 1 0;
+  min-width: 4px;
+  height: 8px;
+  border-radius: 3px;
+  opacity: 0.28; /* 不可视默认暗 */
+  cursor: pointer;
+  transition: opacity 200ms ease-out;
+}
+
+.wl-bar.wl-bar-visible {
+  opacity: 0.82; /* 当前视口内 */
+}
+
+.wl-bar:hover {
+  opacity: 1;
+}
+
+/* 液态玻璃当前范围框 */
+.wl-glass {
+  position: absolute;
+  top: -2px;
+  height: 44px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.96);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.44), 0 2px 3.5px rgba(0, 0, 0, 0.05);
+  background: rgba(236, 236, 236, 0.7);
+  pointer-events: none;
+  transition: left 250ms ease-out, width 250ms ease-out;
+  z-index: 0; /* 低于短条:仅作背后浅色高光,不模糊短条 */
+}
+
+/* 翻页按钮 */
+.wl-page-btns {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.wl-page-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #dfdfdf;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #191919;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.wl-page-btn:hover {
+  background: #f5f7fa;
+}
+
+/* —— 卡片列表(555.5,324 起,可视到 y905) —— */
+.wl-list-mask {
+  position: absolute;
+  left: 0;
+  top: 74px;
+  width: 1332px;
+  height: 581px; /* y 324 → 905 */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 64px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 64px), transparent);
+}
+
+.wl-list {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.wl-list::-webkit-scrollbar {
+  display: none;
+}
+
+.wl-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 654px);
+  gap: 24px;
+  padding-bottom: 64px;
+}
+
+/* —— 卡片(654×248) —— */
+.wl-card {
+  width: 654px;
+  height: 248px;
+  border-radius: 16px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04);
+  padding: 20px 24px;
+  box-sizing: border-box;
+  cursor: pointer;
+  outline: none;
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out, border-color 200ms ease-out;
+  overflow: hidden;
+  position: relative;
+}
+
+.wl-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(40, 60, 120, 0.1);
+}
+
+.wl-card-selected {
+  border: 1.5px solid #0067d1 !important;
+}
+
+.wl-card-head {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wl-card-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.wl-card-name {
+  color: #191919;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wl-card-tag {
+  flex-shrink: 0;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.wl-card-time {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: #777;
+  font-size: 12px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 主指标三列(高 76,上距 20) */
+.wl-main-metrics {
+  margin-top: 20px;
+  height: 76px;
+  display: flex;
+  gap: 24px;
+}
+
+.wl-mm {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.wl-mm-first {
+  width: 152px;
+  flex-shrink: 0;
+}
+
+.wl-mm-mid {
+  width: 278px;
+  flex-shrink: 0;
+}
+
+.wl-mm-last {
+  width: 128px;
+  flex-shrink: 0;
+}
+
+.wl-mm-label {
+  color: #777;
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wl-mm-value-xl {
+  color: #191919;
+  font-size: 32px;
+  line-height: 48px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.wl-mm-value-md {
+  color: #191919;
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 500;
+  padding-top: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.wl-fail {
+  color: #e02128;
+  font-weight: 500;
+}
+
+.wl-divider {
+  margin-top: 14px;
+  height: 1px;
+  background: #dfdfdf;
+  opacity: 0.42;
+}
+
+/* 辅助指标四列(高 50,上距 16) */
+.wl-sub-metrics {
+  margin-top: 16px;
+  display: flex;
+  gap: 24px;
+}
+
+.wl-sub-metrics > div {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wl-sm-label {
+  color: #777;
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wl-sm-value {
+  color: #191919;
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 空态 */
+.wl-empty {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #aeaeae;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.wl-empty-icon {
+  width: 48px;
+  height: 48px;
+  opacity: 0.3;
+}
+
+/* 单位跟数值 */
+.wl-unit {
+  font-style: normal;
+  font-size: 18px;
+  line-height: 26px;
+  color: #777;
+  margin-left: 2px;
+}
+
+.wl-unit-sm {
+  font-style: normal;
+  font-size: 14px;
+  line-height: 22px;
+  color: #777;
+  margin-left: 2px;
+}
+
+
+/* S03 诊断详情页:左侧事件面板 */
+.dt-panel {
+  position: absolute;
+  left: 48px;
+  top: 48px;
+  width: 484px;
+  height: 1032px;
+  background: #ffffff;
+  border-right: 1px solid #efefef;
+  z-index: 40;
+  animation: dt-slide-in 220ms ease-out;
+  overflow: hidden;
+}
+
+@keyframes dt-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.dt-panel-hidden {
+  /* 工具条收起时左移出画布(第2批接入) */
+  transform: translateX(-484px);
+  transition: transform 250ms ease-out;
+}
+
+.dt-header {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 484px;
+  height: 112px;
+  display: block;
+  user-select: none;
+}
+
+.dt-back-hot {
+  position: absolute;
+  left: 24px;
+  top: 48px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.dt-back-hot:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dt-more-hot {
+  position: absolute;
+  left: 438px;
+  top: 44px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.dt-more-hot:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dt-head-divider {
+  position: absolute;
+  left: 0;
+  top: 112px; /* 相对面板(画布160 − 48) */
+  width: 484px;
+  height: 1px;
+  background: #eeeeee;
+}
+
+.dt-scroll {
+  position: absolute;
+  left: 0;
+  top: 113px; /* 相对面板(画布161 − 48) */
+  width: 484px;
+  height: 839px; /* 到 y1000 */
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 16px 16px 24px;
+  box-sizing: border-box;
+  background: #ffffff;
+}
+
+.dt-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.dt-summary {
+  display: block;
+  width: 452px;
+  height: 270px;
+  user-select: none;
+  margin-top: 0; /* 滚动区 padding-top 16 → 画布 (64,177) */
+}
+
+.dt-input-zone {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 484px;
+  height: 80px;
+  background: #ffffff;
+}
+
+.dt-input-bg {
+  position: absolute;
+  left: 20px;
+  top: 20px; /* 相对 input-zone(画布 y1020 − zone顶1000) */
+  width: 444px;
+  height: 48px;
+  display: block;
+  user-select: none;
+}
+
+.dt-input {
+  position: absolute;
+  left: 38px;
+  top: 35px;
+  width: 378px;
+  height: 22px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 22px;
+  color: #191919;
+}
+
+.dt-input::placeholder {
+  color: #aeaeae;
+}
+
+/* —— 右侧诊断区 —— */
+.dt-right {
+  position: absolute;
+  left: 532px;
+  top: 48px;
+  width: 1388px;
+  height: 1032px;
+  background: #f3f3f3;
+  z-index: 30;
+  animation: dt-fade-up 250ms ease-out 60ms both;
+}
+
+@keyframes dt-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dt-right-expanded {
+  left: 48px;
+  width: 1872px;
+  transition: left 250ms ease-out, width 250ms ease-out;
+}
+
+.dt-toolbar {
+  position: absolute;
+  left: 24px;
+  top: 22px;
+  right: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dt-toolbar-title {
+  color: #191919;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+}
+
+.dt-toolbar-zoom {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dt-toolbar-zoom:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dt-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #aeaeae;
+  font-size: 14px;
+  padding-top: 60px;
+}
+
+.dt-placeholder img {
+  width: 32px;
+  height: 32px;
+  opacity: 0.4;
+}
+
+/* 仅工具条层(背景透明,不挡 §4/§5 内容) */
+.dt-right-toolbar-only {
+  background: transparent;
+  pointer-events: none;
+  animation: none;
+  z-index: 50;
+}
+
+.dt-right-toolbar-only .dt-toolbar {
+  pointer-events: auto;
+}
+
+/* 已恢复标签(覆盖页头待人工处理,画布(330,66)→面板(282,18)) */
+.dt-restored-tag {
+  position: absolute;
+  left: 282px;
+  top: 18px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 4px;
+  background: #e7fbf2;
+  color: #09aa71;
+  font-size: 12px;
+  line-height: 20px;
+  z-index: 2;
+}
+
+/* toast */
+.dt-toast {
+  position: absolute;
+  left: 50%;
+  top: 24px;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #1f2329;
+  color: #ffffff;
+  font-size: 13px;
+  line-height: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  z-index: 60;
+  animation: dt-fade-up 200ms ease-out;
+}
+
+
+/* S03 处理过程手风琴 */
+.st-list {
+  margin-top: 16px;
+  width: 452px;
+}
+
+.st-title-row {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.st-title {
+  color: #191919;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+}
+
+.st-expand-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: #0067d1;
+  font-family: var(--font-family);
+  font-size: 12px;
+  line-height: 20px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.st-expand-all:hover {
+  text-decoration: underline;
+}
+
+.st-expand-all img {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+/* —— 步骤 —— */
+.st-step {
+  position: relative;
+  margin-bottom: 8px; /* 36 标题 + 8 间距 = 44 行高 */
+}
+
+.st-head {
+  position: relative;
+  width: 100%;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0;
+  z-index: 1;
+}
+
+.st-head:hover {
+  background: #f7f8fa;
+}
+
+.st-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: inline-flex;
+}
+
+.st-icon img {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.st-icon-spin img {
+  animation: st-spin 2s linear infinite;
+}
+
+@keyframes st-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.st-name {
+  color: #191919;
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.st-tag {
+  margin-left: auto;
+  flex-shrink: 0;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.st-caret {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: block;
+}
+
+/* 图标下竖连线 */
+.st-line {
+  position: absolute;
+  left: 7.5px;
+  top: 32px;
+  width: 1px;
+  height: 16px;
+  background: #dfdfdf;
+  z-index: 0;
+}
+
+/* 展开内容(高度动画) */
+.st-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 200ms ease-out;
+}
+
+.st-body-open {
+  max-height: 1200px;
+}
+
+.st-body-inner {
+  padding: 4px 12px 12px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 记录行/正文 */
+.st-record {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.st-record-time {
+  color: #191919;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+}
+
+.st-record-title {
+  color: #191919;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.st-text {
+  margin: 0;
+  color: #191919;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.st-record-dot {
+  width: 8px;
+  height: 13px;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.st-record .st-record-dot {
+  /* qwen 恢复行:圆点 + 行内文字 */
+}
+
+.st-record {
+  /* 行内变体(qwen) */
+}
+
+.st-record-inline {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.st-text-inline {
+  color: #191919;
+  font-size: 14px;
+  line-height: 22px;
+  width: 408px;
+}
+
+/* 光链路恢复区 */
+.st-opt-recover {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* 图自带 28 缩进,此处不再加左 padding */
+}
+
+.st-recover-img {
+  width: 452px;
+  height: 358px;
+  display: block;
+  margin-left: -28px; /* 抵消 st-body-inner 的 28 缩进 */
+  user-select: none;
+}
+
+/* qwen 恢复区 */
+.st-qwen-recover {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.st-qwen-recover .st-record {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.st-version-card {
+  width: 424px;
+  background: #ffffff;
+  border: 1px solid #dfdfdf;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.st-vc-head {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.st-vc-name {
+  color: #191919;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+}
+
+.st-vc-host {
+  color: #777;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.st-vc-body {
+  height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.st-vc-cell {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 54px;
+  border: 1px solid #dfdfdf;
+  border-radius: 8px;
+  padding: 3px 11px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  box-sizing: border-box;
+}
+
+.st-vc-target {
+  border: 1px solid #0067d1;
+  padding: 4px 12px;
+  box-shadow: 2px 2px 20px rgba(0, 0, 0, 0.08);
+  background:
+    linear-gradient(213.3deg, rgba(119, 193, 238, 0.5) 2%, rgba(193, 182, 255, 0.225) 29%, rgba(255, 224, 202, 0.125) 61%, rgba(255, 210, 147, 0.25) 94%),
+    rgba(255, 255, 255, 0.7);
+  background-blend-mode: normal, normal;
+}
+
+.st-vc-label {
+  color: #777;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.st-vc-ver {
+  color: #191919;
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: 500;
+}
+
+.st-vc-ver-grad {
+  font-size: 26px;
+  line-height: 24px;
+  letter-spacing: 0.32px;
+  background: linear-gradient(90deg, #77c1ee 6%, #d270e1 51.5%, #f89e21 109%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.st-vc-swap {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.st-vc-ring {
+  position: absolute;
+  left: -6px;
+  top: -2px;
+  width: 28px;
+  height: 28px;
+}
+
+.st-vc-arrow {
+  position: absolute;
+  top: 4px;
+  width: 16px;
+  height: 16px;
+}
+
+.st-vc-foot {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.st-auth-btn {
+  width: 116px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  background: #0067d1;
+  color: #ffffff;
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.st-auth-btn:hover {
+  background: #0a5fbf;
+}
+
+/* —— 图表块 —— */
+.st-chart {
+  position: relative;
+  width: 424px;
+  user-select: none;
+}
+
+.st-chart > img {
+  width: 424px;
+  display: block;
+}
+
+.st-chart-title {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #777;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.st-chart-tick {
+  position: absolute;
+  color: #777;
+  font-size: 10px;
+  line-height: 14px;
+}
+
+.st-chart-threshold {
+  color: #e02128;
+}
+
+.st-chart-legend {
+  position: absolute;
+  color: #777;
+  font-size: 11px;
+  line-height: 15px;
+  padding-left: 12px;
+}
+
+.st-chart-legend i {
+  position: absolute;
+  left: 0;
+  top: 4.5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.st-chart-cursor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  border-left: 1px dashed #0067d1;
+  pointer-events: none;
+}
+
+.st-chart-tip {
+  position: absolute;
+  top: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  color: #191919;
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* §6 授权升级附加样式 */
+.st-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: #e8e8e8;
+  overflow: hidden;
+}
+
+.st-progress span {
+  display: block;
+  height: 100%;
+  background: #0067d1;
+  transition: width 100ms linear;
+}
+
+.st-auth-busy {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #7ea8d9;
+  cursor: default;
+}
+
+.st-auth-done {
+  background: #c9c9c9;
+  cursor: default;
+}
+
+.st-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  animation: st-spin 0.9s linear infinite;
+}
+
+.st-confirm-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(25, 25, 25, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface-container-highest);
-  border-radius: var(--radius-container);
-  box-shadow: var(--shadow-card);
+  z-index: 200;
 }
 
-.timeline-area-name {
-  color: var(--on-surface-variant);
-  font: var(--font-headline-s);
-  font-weight: var(--font-weight-medium);
+.st-confirm {
+  width: 400px;
+  padding: 20px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.st-confirm-title {
+  color: #191919;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+}
+
+.st-confirm-body {
+  margin: 0;
+  color: #555555;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.st-confirm-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.st-confirm-cancel {
+  width: 72px;
+  height: 32px;
+  border: 1px solid #dfdfdf;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #191919;
+  font-family: var(--font-family);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.st-confirm-ok {
+  width: 88px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  background: #0067d1;
+  color: #ffffff;
+  font-family: var(--font-family);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+
+/* S03 右侧诊断区内容(光链路 / Qwen) */
+.dr-opt-topo {
+  position: absolute;
+  left: 24px;
+  top: 68px; /* 画布 (556,116) 相对 dt-right(532,48) */
+  width: 1332px;
+  height: 722px;
+  display: block;
+  user-select: none;
+}
+
+.dr-opt-process {
+  position: absolute;
+  left: 18px;
+  top: 798px; /* 画布 (550,846) */
+  width: 1344px;
+  height: 210px;
+  display: block;
+  user-select: none;
+}
+
+/* 状态提示框(白底圆角8 阴影 左三角) */
+.dr-tip {
+  position: absolute;
+  width: 340px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 16px;
+  box-sizing: border-box;
+  animation: dr-tip-in 200ms ease-out;
+  z-index: 5;
+}
+
+@keyframes dr-tip-in {
+  from {
+    opacity: 0;
+    transform: translateX(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.dr-tip-opt {
+  left: 348px; /* 画布 (880,354) */
+  top: 306px;
+  height: 86px;
+}
+
+.dr-tip-qw {
+  left: 696px; /* 画布 (1252,431) 相对诊断卡(556,116) */
+  top: 315px;
+  width: 372px;
+  height: 108px;
+}
+
+.dr-tip-arrow {
+  position: absolute;
+  left: -8px;
+  top: 34px;
+  width: 11px;
+  height: 18px;
+  background: #ffffff;
+  clip-path: polygon(100% 0, 100% 100%, 0 50%);
+  filter: drop-shadow(-2px 0 2px rgba(0, 0, 0, 0.08));
+}
+
+.dr-tip-arrow-down {
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 18px;
+  height: 11px;
+  background: #ffffff;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.06));
+}
+
+.dr-tip-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dr-tip-title {
+  color: #191919;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+}
+
+.dr-tip-tag {
+  margin-left: 8px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: #fee7e8;
+  color: #e02128;
+  font-size: 12px;
+  line-height: 20px;
+  flex-shrink: 0;
+}
+
+.dr-tip-body {
+  margin: 4px 0 0 30px;
+  color: #777;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.dr-tip-qw .dr-tip-body {
+  color: #555;
+}
+
+/* 热区 */
+.dr-zone {
+  position: absolute;
+  border: 2px solid transparent;
+  background: rgba(0, 103, 209, 0.03);
+  padding: 0;
+  cursor: pointer;
+  border-radius: 4px;
+  z-index: 4;
+  box-sizing: border-box;
+  transition: border-color 120ms ease-out, background-color 120ms ease-out;
+}
+
+.dr-zone:hover {
+  border-color: #0067d1;
+  background: rgba(0, 103, 209, 0.06);
+}
+
+/* 处理环节节点热区 */
+.dr-node {
+  position: absolute;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  z-index: 4;
+}
+
+.dr-node-flash {
+  background: #e6f2fd;
+  animation: dr-flash 0.6s ease-out;
+}
+
+@keyframes dr-flash {
+  0% { background: #cce3fb; }
+  100% { background: #e6f2fd; }
+}
+
+/* hover 小提示 */
+.dr-hover-tip {
+  position: absolute;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+  color: #191919;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* —— Qwen 诊断卡 —— */
+.dr-qw-card {
+  position: absolute;
+  left: 24px;
+  top: 68px; /* (556,116) */
+  width: 1332px;
+  height: 720px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.dr-qw-metrics {
+  position: absolute;
+  left: 2px;
+  top: 2px; /* (558,118) 相对卡 */
+  width: 1322px;
+  height: 148px;
+  display: block;
+  user-select: none;
+}
+
+.dr-qw-topo {
+  position: absolute;
+  left: 18px;
+  top: 177px; /* (574,293) 相对卡 */
+  width: 1090px;
+  height: 470px;
+  display: block;
+  user-select: none;
+}
+
+.dr-qw-cabinet {
+  position: absolute;
+  left: 1104px;
+  top: 197px; /* (1660,313) */
+  width: 228px;
+  height: 488px;
+  display: block;
+  user-select: none;
+}
+
+/* —— Qwen 底部卡 —— */
+.dr-qw-bottom {
+  position: absolute;
+  left: 18px;
+  top: 799px; /* (550,847) */
+  width: 1344px;
+  height: 222px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.dr-tabs {
+  position: absolute;
+  left: 26px;
+  top: 18px;
+  display: flex;
+  gap: 16px;
+  z-index: 3;
+}
+
+.dr-tab {
+  border: none;
+  background: transparent;
+  color: #191919;
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 24px;
+  padding: 0 2px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.dr-tab-on {
+  color: #0067d1;
+  border-bottom-color: #0067d1;
+}
+
+.dr-qw-journey {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1344px;
+  height: 222px;
+  display: block;
+  user-select: none;
+}
+
+.dr-journey-dot {
+  position: absolute;
+  top: 173px; /* 画布 1022 − 卡顶847 */
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 3;
+}
+
+/* —— DOM 版处理环节时间线 —— */
+.dr-process-strip {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  z-index: 2;
+}
+
+.dr-ps-line {
+  position: absolute;
+  left: 616px;
+  right: 116px;
+  top: 64px;
+  height: 2px;
+  background: #dfdfdf;
+}
+
+.dr-ps-node {
+  position: absolute;
+  top: 48px;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.dr-ps-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #09aa71;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dr-ps-dot img {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.dr-ps-node-cur .dr-ps-dot {
+  border: 2px solid #e02128;
+  box-shadow: 0 0 0 4px rgba(224, 33, 40, 0.12);
+}
+
+.dr-ps-hand {
+  animation: dr-spin 2s linear infinite;
+}
+
+@keyframes dr-spin {
+  to { transform: rotate(360deg); }
+}
+
+.dr-ps-name {
+  color: #191919;
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.dr-ps-desc {
+  color: #777;
+  font-size: 12px;
+  line-height: 20px;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dr-ps-time {
+  color: #777;
+  font-size: 12px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* D-08 恢复绿色六边形(画布(1485,580)→诊断卡(556,116):left 929,top 464) */
+.dr-hex-normal {
+  position: absolute;
+  left: 929px;
+  top: 464px;
+  width: 95px;
+  height: 102px;
+  animation: dr-fade-in-400 400ms ease-out;
+  z-index: 5;
+  pointer-events: none;
+}
+
+@keyframes dr-fade-in-400 {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 </style>
@@ -4560,21 +7468,61 @@ const zhCN = {
 /* ===== src/context.jsx ===== */
 (function () {
   const { useState, useEffect, createContext, useContext } = React;
-// Layer 1: 全局状态 — 主题模式与业务状态
-// 换肤单轨驱动:isDark 只切换 <html> 的 .dark class;
-// 普通 H5 元素(token 四层)与 antd 组件(ant.css 换肤层)同源跟随,无需 React 参与换肤。
+// Layer 1: 全局状态 — 主题模式 + 业务视图状态机(S02) + 诊断详情路由(S03)
+// view: 'home' | 'train' | 'infer';detail: null | 'optical' | 'qwen'
 const AppContext = createContext(null);
 
 function AppProvider({ children }) {
   const [isDark, setIsDark] = useState(false);
+  const [view, setView] = useState("home");
+  const [detail, setDetail] = useState(null);
+  const [detailFrom, setDetailFrom] = useState("home");
+  const [resolved, setResolved] = useState(false); // true = Qwen 授权升级已完成
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
 
+  const openDetail = (id) => {
+    setDetailFrom(view);
+    setDetail(id);
+  };
+  const closeDetail = () => {
+    if (resolved) {
+      const frame = document.querySelector(".cabinet-area-frame");
+      if (frame && frame.contentWindow) {
+        frame.contentWindow.postMessage({ type: "resolveCabinet", id: "D-08" }, "*");
+        // reset 延迟:等 detail 卸载动画/层恢复后再触发,避免被隐藏态吞掉
+        setTimeout(() => {
+          if (frame.contentWindow) frame.contentWindow.postMessage({ type: "reset" }, "*");
+        }, 400);
+      }
+    }
+    setDetail(null);
+  };
+
+  // Esc:详情页优先返回 detailFrom,业务视图返回 home
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      if (detail) { closeDetail(); return; }
+      if (view !== "home") setView("home");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [detail, view]);
+
   const value = {
     isDark,
     toggleDark: () => setIsDark((d) => !d),
+    view,
+    setView,
+    detail,
+    detailFrom,
+    openDetail,
+    closeDetail,
+    resolved,
+    markResolved: () => setResolved(true),
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
@@ -4588,10 +7536,48 @@ function useApp() {
 
 /* ===== src/views/top-nav/index.jsx ===== */
 (function () {
+  const { useEffect, useRef, useState } = React;
+const S01 = "./assets/uploads/s01";
+
+// 顶部导航 · 1:1:整条 top-nav@2x.png(白底/Logo/标题/胶囊图形/右侧图标/分割线)
+// + 叠加「智能模式」白字;胶囊/月亮/用户仅保留透明热区(图内已有可见图形)
 function TopNav() {
+  const [themeTip, setThemeTip] = useState(false);
+  const tipTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(tipTimer.current), []);
+
+  const onThemeClick = () => {
+    setThemeTip(true);
+    clearTimeout(tipTimer.current);
+    tipTimer.current = setTimeout(() => setThemeTip(false), 2000);
+  };
+
   return (
     <header className="top-nav">
-      <span className="top-nav-name">顶部导航栏</span>
+      <img className="tn-bg" src={`${S01}/top-nav@2x.png`} alt="" draggable={false} />
+
+      {/* 图内不含的「智能模式」文字(257,14) */}
+      <span className="tn-mode-text">智能模式</span>
+
+      {/* 透明热区:智能模式胶囊 224–335 × 6–42 */}
+      <button type="button" className="tn-hot" style={{ left: 224, top: 6, width: 111, height: 36 }} title="切换智能模式" />
+
+      {/* 透明热区:月亮 ≈1804–1828(y12–36,主题切换) / 用户 ≈1852–1876 */}
+      <button
+        type="button"
+        className="tn-hot"
+        style={{ left: 1804, top: 12, width: 24, height: 24 }}
+        onClick={onThemeClick}
+        title="深色主题"
+      />
+      {themeTip ? <span className="tn-theme-tip">深色主题设计中，敬请期待</span> : null}
+      <button
+        type="button"
+        className="tn-hot"
+        style={{ left: 1852, top: 12, width: 24, height: 24 }}
+        title="用户中心"
+      />
     </header>
   );
 }
@@ -4600,72 +7586,2632 @@ function TopNav() {
 
 /* ===== src/views/side-nav/index.jsx ===== */
 (function () {
+const S01 = "./assets/uploads/s01";
+
+// 左侧图标栏 · 1:1:白底 + 右 1px 边线(现有),图标全部用原稿 PNG
+// 组件内 y = 画布 y − 48(侧栏起于顶栏之下)
+const ITEMS = [
+  { src: "sn-logo@2x.png", x: 12, y: 32, w: 24, h: 24, title: "" },
+  { src: "sn-home@2x.png", x: 6, y: 78.79, w: 36, h: 36, title: "首页" },
+  { src: "sn-1@2x.png", x: 16, y: 136.79, w: 16, h: 16, title: "" },
+  { src: "sn-2@2x.png", x: 16, y: 184.79, w: 16, h: 16, title: "" },
+  { src: "sn-3@2x.png", x: 16, y: 232.79, w: 16, h: 16, title: "" },
+  { src: "sn-bottom@2x.png", x: 16, y: 998, w: 16, h: 16, title: "展开菜单" },
+];
+
 function SideNav() {
   return (
     <nav className="side-nav">
-      <span className="side-nav-name">侧边导航栏</span>
+      {ITEMS.map((item) => (
+        <img
+          key={item.src}
+          src={`${S01}/${item.src}`}
+          alt=""
+          title={item.title || undefined}
+          draggable={false}
+          style={{ left: item.x, top: item.y, width: item.w, height: item.h }}
+        />
+      ))}
     </nav>
   );
 }
   Object.assign(__export, { SideNav });
 })();
 
+/* ===== assets/shared/icon.jsx ===== */
+(function () {
+  const LUCIDE = {
+    "check": [["path",{"d":"M20 6 9 17l-5-5"}]],
+    "link": [["path",{"d":"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"}],["path",{"d":"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"}]],
+    "minimize": [["path",{"d":"M8 3v3a2 2 0 0 1-2 2H3"}],["path",{"d":"M21 8h-3a2 2 0 0 1-2-2V3"}],["path",{"d":"M3 16h3a2 2 0 0 1 2 2v3"}],["path",{"d":"M16 21v-3a2 2 0 0 1 2-2h3"}]],
+    "play": [["path",{"d":"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"}]],
+    "refresh-cw": [["path",{"d":"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"}],["path",{"d":"M21 3v5h-5"}],["path",{"d":"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"}],["path",{"d":"M8 16H3v5"}]],
+    "trending-down": [["path",{"d":"M16 17h6v-6"}],["path",{"d":"m22 17-8.5-8.5-5 5L2 7"}]],
+    "triangle-alert": [["path",{"d":"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"}],["path",{"d":"M12 9v4"}],["path",{"d":"M12 17h.01"}]],
+    "x": [["path",{"d":"M18 6 6 18"}],["path",{"d":"m6 6 12 12"}]],
+  };
+  const { useState, useEffect, useRef, useLayoutEffect } = React;
+// ---- Lucide (offline fallback, table injected at build time) ----
+const ICONS = typeof LUCIDE !== "undefined" ? LUCIDE : {};
+
+function camelToKebab(s) {
+  return s.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+}
+
+function lookupIcon(name) {
+  if (!name) return null;
+  return (
+    ICONS[name] ||
+    ICONS[camelToKebab(name)] ||
+    ICONS[name.replace(/-([a-z])/g, (_m, c) => c.toUpperCase())] ||
+    null
+  );
+}
+
+// ---- icon-plus (联通) online flow, same as packages/previewpc ----
+const ICON_API_BASE = "https://octo.hdesign.huawei.com";
+const GET_CONFIG = `${ICON_API_BASE}/assetRepository/iconPlus/getConfig`;
+const GET_ICON_INFO = `${ICON_API_BASE}/assetRepository/iconPlus/getIconInfo`;
+const GET_ICON = `${ICON_API_BASE}/assetRepository/iconPlus/getIcon`;
+
+let plusState = null; // null = probing, true = icon-plus available, false = fall back to Lucide
+let plusPromise = null; // singleton getConfig probe promise
+let iconConfig = null;
+let defaultColorId = "";
+const iconInfoMap = {}; // name -> { name, url } (结果缓存)
+const iconInfoPromiseMap = {}; // name -> 进行中 Promise (in-flight 去重)
+const svgCache = new Map(); // "name&variant&color&size" -> svg text (结果缓存)
+const svgPromiseMap = new Map(); // "name&variant&color&size" -> 进行中 Promise (in-flight 去重)
+
+// 动态获取当前 rem 基准 px（html font-size 随视口媒体查询变化：12/14/16/20px）
+function getRootFontSize() {
+  if (typeof document === "undefined") return 16;
+  const fs = getComputedStyle(document.documentElement).fontSize;
+  return parseFloat(fs) || 16;
+}
+
+// 将 getComputedStyle 返回的 rgb()/rgba() 字符串转为 #RRGGBB，用于 icon-plus API 颜色匹配
+function rgbToHex(rgb) {
+  if (!rgb) return null;
+  const m = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+  if (!m) return null;
+  return "#" + [1, 2, 3].map(function (i) { return parseInt(m[i], 10).toString(16).padStart(2, "0"); }).join("").toUpperCase();
+}
+
+// #RGB / #RRGGBB -> [r,g,b]；非法输入返回 null
+function hexToRgb(hex) {
+  if (!hex) return null;
+  let h = String(hex).replace(/^#/, "").trim();
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+  const n = parseInt(h, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+// 两个 hex 颜色的欧氏距离（RGB 空间），用于 icon-plus 颜色就近匹配
+function colorDistance(a, b) {
+  const ra = hexToRgb(a);
+  const rb = hexToRgb(b);
+  if (!ra || !rb) return Infinity;
+  return Math.sqrt(
+    (ra[0] - rb[0]) ** 2 + (ra[1] - rb[1]) ** 2 + (ra[2] - rb[2]) ** 2
+  );
+}
+
+// getIcon 接口的 size 参数需数字 px。源 size 可能是 rem/px/数字，转 px 后吸附到 icon-plus 标准尺寸。
+const API_SIZES = [12, 14, 16, 20, 24, 32, 36, 40, 48, 60];
+function toApiSize(size) {
+  let n = null;
+  if (size != null) {
+    const m = String(size).trim().match(/(-?\d+(?:\.\d+)?)\s*(rem|px)?/i);
+    if (m) {
+      n = Number(m[1]);
+      if (m[2] && m[2].toLowerCase() === "rem") n = n * getRootFontSize();
+    }
+  }
+  if (n == null || Number.isNaN(n)) return 16;
+  let best = API_SIZES[0], bestDiff = Math.abs(n - best);
+  for (const s of API_SIZES) {
+    const d = Math.abs(n - s);
+    if (d < bestDiff) { bestDiff = d; best = s; }
+  }
+  return best;
+}
+
+// variant prop -> getConfig style key (matches previewpc's shapeToStyleKey)
+const STYLE_KEY = {
+  lined: "border",
+  filled: "filled",
+  "two-tone": "two_colors1",
+  circle: "round_bottom2",
+  square: "square_bottom2",
+};
+
+function getStyleValue(styleKey) {
+  return iconConfig?.style?.find((s) => s.key === styleKey)?.value || styleKey;
+}
+
+// resolve an API color id from the requested hex against getConfig colors
+// 精确命中 → 就近匹配（RGB 欧氏距离最小）→ defaultColorId 兜底
+function resolveColorId(variant, colorHex) {
+  const styleValue = getStyleValue(STYLE_KEY[variant] || "border");
+  const colors = (iconConfig?.colors || []).filter((c) => c.style === styleValue);
+  if (colorHex) {
+    const target = colorHex.toUpperCase();
+    // 1. 精确匹配：某个 color 的 value 列表里直接包含目标色
+    const exact = colors.find((c) =>
+      String(c.value).split(",").map((v) => v.trim().toUpperCase()).includes(target)
+    );
+    if (exact) return exact.id;
+    // 2. 就近匹配：取与目标色 RGB 距离最小的 color（多色值取其中最近的）
+    let best = null;
+    let bestDist = Infinity;
+    for (const c of colors) {
+      for (const v of String(c.value).split(",")) {
+        const d = colorDistance(target, v.trim());
+        if (d < bestDist) { bestDist = d; best = c; }
+      }
+    }
+    if (best) return best.id;
+  }
+  // 3. 兜底：线性通用色 → 该 style 下第一个 → 空串
+  return defaultColorId || colors[0]?.id || "";
+}
+
+// getConfig probe == 联通可用性验证 (same as previewpc fetchIconConfig)
+function ensurePlus() {
+  if (plusPromise) return plusPromise;
+  plusPromise = (async () => {
+    try {
+      const resp = await fetch(GET_CONFIG);
+      if (!resp.ok) {
+        plusState = false;
+        return false;
+      }
+      iconConfig = await resp.json();
+      const linear = iconConfig.colors?.find(
+        (c) => c.type === "linear" || c.type === "通用色"
+      );
+      defaultColorId =
+        linear?.id || iconConfig.colors?.[0]?.id || "";
+      plusState = true;
+      return true;
+    } catch (e) {
+      plusState = false;
+      return false;
+    }
+  })();
+  return plusPromise;
+}
+
+// pick the best icon-plus match for a keyword (prefer system-icon group, then name contains keyword, else first)
+function selectBestIcon(icons, keyword) {
+  return (
+    icons.find(
+      (i) => Array.isArray(i.group) && i.group.some((g) => g.includes("系统图标"))
+    ) ||
+    icons.find((i) => i.name?.toLowerCase().includes(keyword.toLowerCase())) ||
+    icons[0]
+  );
+}
+
+// name -> { name, url } via getIconInfo (结果缓存在 iconInfoMap；并发去重靠 iconInfoPromiseMap)
+async function resolveIconInfo(name) {
+  if (iconInfoMap[name]) return iconInfoMap[name];
+  // 同 name 并发请求共享同一个进行中 Promise，避免 N 个相同图标各发一次 getIconInfo
+  if (iconInfoPromiseMap[name]) return iconInfoPromiseMap[name];
+  const p = (async () => {
+    try {
+      const resp = await fetch(
+        `${GET_ICON_INFO}?keyword=${encodeURIComponent(name)}&topK=2&source_id=6`
+      );
+      const data = await resp.json(); // [{ keyword, icons: [{ icon_id, name, category, group[], url }] }]
+      const entry = (Array.isArray(data) ? data : [data]).find(
+        (d) => d.icons?.length
+      );
+      const selected = selectBestIcon(entry?.icons || [], name);
+      if (!selected?.url) return null;
+      iconInfoMap[name] = { name: selected.name, url: selected.url };
+      return iconInfoMap[name];
+    } catch (e) {
+      return null;
+    }
+  })();
+  iconInfoPromiseMap[name] = p;
+  // 落定后清除 in-flight 条目（失败也清除，允许下次重试，不永久缓存 rejected 结果）
+  p.finally(() => {
+    delete iconInfoPromiseMap[name];
+  });
+  return p;
+}
+
+// fetch the SVG text for a name via getIcon (url + size + variant + colorId + fileType=svg)
+// 结果缓存在 svgCache；并发去重靠 svgPromiseMap，相同 key 共享同一进行中 Promise
+// key 含 size：不同尺寸取回的 SVG 不同，不可复用
+function fetchSvg(name, variant, colorHex, size) {
+  const key = `${name}&${variant}&${colorHex}&${size}`;
+  if (svgCache.has(key)) return Promise.resolve(svgCache.get(key));
+  if (svgPromiseMap.has(key)) return svgPromiseMap.get(key);
+  const p = (async () => {
+    const info = await resolveIconInfo(name);
+    if (!info) return "";
+    const styleValue = getStyleValue(STYLE_KEY[variant] || "border");
+    const colorId = resolveColorId(variant, colorHex);
+    try {
+      const resp = await fetch(
+        `${GET_ICON}?url=${encodeURIComponent(info.url)}&size=${toApiSize(size)}&style=${encodeURIComponent(
+          styleValue
+        )}&color=${encodeURIComponent(colorId)}&fileType=svg`
+      );
+      const data = await resp.json(); // { url, name, data } or array
+      const item = Array.isArray(data) ? data[0] : data;
+      return item?.data || ""; // raw SVG text, injected as-is
+    } catch (e) {
+      return "";
+    }
+  })();
+  svgPromiseMap.set(key, p);
+  // 落定后写入结果缓存并清除 in-flight 条目；空结果（失败）不缓存，允许下次重试
+  p.then((s) => {
+    if (s) svgCache.set(key, s);
+  }).finally(() => {
+    svgPromiseMap.delete(key);
+  });
+  return p;
+}
+
+// size → rem 字符串;数字(设计画布 px)兜底转换为 rem
+function resolveSize(size) {
+  if (typeof size === "number") {
+    console.warn(`[Icon] size={${size}} is a number — use rem string instead (e.g. size="${(size / 16).toFixed(4).replace(/\.?0+$/, "")}rem")`);
+    const rootFontSize = getRootFontSize();
+    const rem = size / rootFontSize;
+    return `${parseFloat(rem.toFixed(4))}rem`;
+  }
+  return size;
+}
+
+function Icon({
+  name,
+  src,
+  size = "1rem",
+  color,
+  className = "",
+  style,
+  strokeWidth = 2,
+  variant = "lined",
+  onClick,
+  title,
+  id,
+}) {
+  const resolvedSize = resolveSize(size);
+  const mergedStyle = onClick ? { cursor: "pointer", ...style } : style;
+  const wrapRef = useRef(null);
+  const [inheritedColor, setInheritedColor] = useState(null);
+  const effectiveColor = color || inheritedColor;
+  const [plus, setPlus] = useState(plusState); // reuse already-probed result
+
+    // 仅 icon-plus 模式（plus 就绪、非 src 资源、无显式 color）才需要继承父元素颜色；
+  // Lucide / img 模式颜色由 CSS（currentColor）或属性直接处理，不读计算色、不监听主题
+  useLayoutEffect(function () {
+    if (src || plus !== true || color) return;
+    const el = wrapRef.current;
+    if (!el) return; // 尚未挂载（首次 plus===null 返回 null）
+    const hex = rgbToHex(getComputedStyle(el).color);
+    if (hex && hex !== inheritedColor) setInheritedColor(hex);
+  });
+
+  const [svg, setSvg] = useState(
+    () => svgCache.get(`${name}&${variant}&${effectiveColor}&${size}`) || ""
+  );
+
+    // 主题切换时 <html> class 变化不会触发 React 重渲染，需 MutationObserver 主动监听。
+  // antd Button 等组件有 transition: color 0.2s，getComputedStyle 在 transition 期间返回中间色值；
+  // 立即读一次覆盖无 transition 的图标，200ms 后再读一次覆盖 Button 等带 transition 的图标。
+  // 仅 icon-plus 模式（plus 就绪、非 src 资源、无显式 color）才挂观察者，依赖变化时重建
+  useEffect(() => {
+    if (src || plus !== true || color) return;
+    const readColor = () => {
+      const el = wrapRef.current;
+      if (!el) return;
+      const hex = rgbToHex(getComputedStyle(el).color);
+      if (hex) setInheritedColor(function (prev) { return hex !== prev ? hex : prev; });
+    };
+    let timer = null;
+    const observer = new MutationObserver(() => {
+      readColor();
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(readColor, 300);
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return function () {
+      observer.disconnect();
+      if (timer) clearTimeout(timer);
+    };
+  }, [plus, src, color]);
+
+  useEffect(() => {
+    if (src) return; // user-asset mode: no network needed
+    let alive = true;
+    ensurePlus().then((ok) => {
+      if (!alive) return;
+      setPlus(ok);
+      if (!ok) return; // getConfig probe failed → Lucide branch
+      const key = `${name}&${variant}&${effectiveColor}&${size}`;
+      if (svgCache.has(key)) {
+        setSvg(svgCache.get(key));
+        return;
+      }
+      fetchSvg(name, variant, effectiveColor, size).then((s) => {
+        if (!alive || !s) return; // 空结果（失败）不写入 state，允许下次重试
+        setSvg(s);
+      });
+    });
+    return () => {
+      alive = false;
+    };
+  }, [src, name, variant, effectiveColor, size]);
+
+  // user-provided asset (svg/png/jpg) via relative path — overrides name when both are set
+  if (src) {
+    return React.createElement("img", {
+      src: src,
+      id,
+      width: resolvedSize,
+      height: resolvedSize,
+      className: className,
+      alt: "",
+      "aria-hidden": true,
+      onClick,
+      title,
+      style: { ...mergedStyle, display: "inline-block", verticalAlign: "middle" },
+    });
+  }
+
+  // probe not finished yet → render nothing
+  if (plus === null) return null;
+
+  // icon-plus unavailable (offline) → Lucide fallback (original behavior)
+  if (plus === false) {
+    const nodes = lookupIcon(name);
+    if (!nodes) return null;
+    return React.createElement(
+      "svg",
+      {
+        xmlns: "http://www.w3.org/2000/svg",
+        width: resolvedSize,
+        height: resolvedSize,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        strokeWidth: strokeWidth,
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        className: className,
+        "aria-hidden": true,
+        id,
+        onClick,
+        title,
+        style: { ...mergedStyle, stroke: color || "currentColor" },
+      },
+      nodes.map(([tag, attrs], i) =>
+        React.createElement(tag, { key: i, ...attrs })
+      )
+    );
+  }
+
+  // icon-plus available → render fetched SVG text as-is (only width/height on the wrapper)
+  if (!svg) {
+    return React.createElement("span", {
+      ref: wrapRef,
+      id,
+      className,
+      "aria-hidden": true,
+      onClick,
+      title,
+      style: { ...mergedStyle, display: "inline-flex", alignItems: "center", justifyContent: "center", verticalAlign: "middle", lineHeight: 0, width: resolvedSize, height: resolvedSize },
+    });
+  }
+
+  return React.createElement("span", {
+    ref: wrapRef,
+    id,
+    className,
+    "aria-hidden": true,
+    onClick,
+    title,
+    style: { ...mergedStyle, display: "inline-flex", alignItems: "center", justifyContent: "center", verticalAlign: "middle", lineHeight: 0, width: resolvedSize, height: resolvedSize },
+    dangerouslySetInnerHTML: { __html: svg },
+  });
+}
+  Object.assign(__export, { Icon });
+})();
+
+/* ===== src/mock/ai-panel.js ===== */
+(function () {
+// Layer 2: AI 对话面板（算小维）mock 数据 — 守护效果、故障隐患/能效卡片、智能体事件
+const aiPanelMeta = {
+  name: "算小维",
+  timeRange: "近一天",
+};
+
+const aiHero = {
+  avatar: "./assets/uploads/suanxiaowei.png",
+  bubbleLead: "算小维",
+  bubbleText: "在岗，健康守护中～",
+};
+
+// 守护效果正文:分段富文本。tone "grad" = 紫粉渐变,"error" = 红色
+const guardSummary = [
+  { text: "正在守护" },
+  { text: "8个超节点，" },
+  { text: "8192卡，", tone: "grad" },
+  { text: "13个训练作业，", tone: "grad" },
+  { text: "16个推理服务，", tone: "grad" },
+  { text: "业务均正常。目前共" },
+  { text: "2", tone: "error" },
+  { text: "项待" },
+  { text: "人工处理的资源事件需关注", tone: "grad" },
+];
+
+const faultCard = {
+  title: "故障与隐患",
+  stats: [
+    { key: "recover", label: "故障恢复", num: "3", rest: "/15", numTone: "error" },
+    { key: "hazard", label: "隐患处理", num: "0", rest: "/18" },
+  ],
+  rate: { value: "66.2", unit: "%", label: "自动闭环率" },
+  metrics: [
+    {
+      key: "availability",
+      label: "作业可用度",
+      value: "99.54",
+      unit: "%",
+      trend: [99.52, 99.53, 99.52, 99.54, 99.53, 99.54, 99.53, 99.54, 99.54, 99.53, 99.54, 99.54],
+    },
+    {
+      key: "successRate",
+      label: "请求成功率",
+      value: "99.74",
+      unit: "%",
+      trend: [99.72, 99.73, 99.72, 99.74, 99.73, 99.74, 99.73, 99.74, 99.74, 99.73, 99.74, 99.74],
+    },
+  ],
+};
+
+const energyCard = {
+  title: "能效优化",
+  status: "节能中",
+  ratio: { value: "86", unit: "/128", label: "节能中/节点总数" },
+  metrics: [
+    {
+      key: "mediumModel",
+      label: "中型模型·百万Token能耗",
+      value: "2.56",
+      unit: "kWh/Mtoken",
+      alert: true,
+      trend: [2.58, 2.57, 2.58, 2.56, 2.57, 2.56, 2.57, 2.56, 2.56, 2.57, 2.56, 2.56],
+    },
+    {
+      key: "largeModel",
+      label: "大型模型·百万Token能耗",
+      value: "3.78",
+      unit: "kWh/Mtoken",
+      trend: [3.8, 3.79, 3.8, 3.78, 3.79, 3.78, 3.79, 3.78, 3.78, 3.79, 3.78, 3.78],
+    },
+  ],
+};
+
+const agentEvents = {
+  title: "智能体事件",
+  filterLabel: "仅显示影响业务事件",
+  viewAllLabel: "查看全部",
+  segments: [
+    { key: "manual", label: "待人工处理", count: 3, tone: "error" },
+    { key: "auto", label: "自动处理中", count: 1, tone: "default" },
+  ],
+  list: [
+    {
+      key: "evt-link-dirty",
+      title: "光链路脏污，待清污",
+      time: "12:00:40",
+      desc: "计算柜11-L1交换板02链路已优雅隔离，等待人工清污",
+      affectsBusiness: false,
+      focusId: "A-15",
+    },
+    {
+      key: "evt-npu-linkdown",
+      title: "NPU网口linkdown",
+      time: "11:57:00",
+      desc: "SuperpodD · 计算柜08，等待人工处理",
+      affectsBusiness: true,
+      focusId: "D-08",
+    },
+    {
+      key: "evt-npu-firmware",
+      title: "NPU驱动固件版本不一致",
+      time: "11:55:00",
+      desc: "SuperpodD · 计算柜08，等待人工处理",
+      affectsBusiness: false,
+      focusId: "D-08",
+    },
+  ],
+  // 「自动处理中」分段的单条 mock 事件(橙色旋转圆环图标)
+  autoList: [
+    {
+      key: "evt-hbm-temp",
+      title: "HBM 温度偏高，自动降频中",
+      time: "12:06:12",
+      desc: "SuperpodB · 计算柜03，预计 3 分钟后恢复",
+    },
+  ],
+  // 「查看全部」抽屉:6 条 mock(含状态标签)
+  drawerList: [
+    { key: "d1", title: "光链路脏污，待清污", time: "12:00:40", status: "待人工" },
+    { key: "d2", title: "NPU网口linkdown", time: "11:57:00", status: "待人工" },
+    { key: "d3", title: "NPU驱动固件版本不一致", time: "11:55:00", status: "待人工" },
+    { key: "d4", title: "HBM 温度偏高，自动降频中", time: "12:06:12", status: "自动处理中" },
+    { key: "d5", title: "冗余电源模块已自动切换", time: "11:32:08", status: "已闭环" },
+    { key: "d6", title: "光模块 CRC 告警已自动恢复", time: "10:58:41", status: "已闭环" },
+  ],
+};
+
+// 「近一天」下拉选项
+const rangeOptions = ["近1小时", "近一天", "近7天"];
+
+// 算小维问答 mock:按关键词匹配回答,locateId 存在时显示「在机房中定位」
+function answerFor(question) {
+  const q = question || "";
+  if (q.includes("A-15")) {
+    return {
+      text: "A-15（SuperpodA · 计算柜15）检测到 NPU 故障，已自动隔离 2 张卡，训练作业已迁移，当前等待人工更换。",
+      locateId: "A-15",
+    };
+  }
+  if (q.includes("D-08")) {
+    return {
+      text: "D-08（SuperpodD · 计算柜08）NPU 网口 linkdown，链路已优雅隔离，等待人工处理。",
+      locateId: "D-08",
+    };
+  }
+  return { text: "当前集群整体健康，2 项待人工处理事件需关注。", locateId: null };
+}
+
+const chatInput = {
+  placeholder: "输入问题或输入“/”触发提示词",
+};
+  Object.assign(__export, { answerFor, aiPanelMeta, aiHero, guardSummary, faultCard, energyCard, agentEvents, rangeOptions, chatInput });
+})();
+
 /* ===== src/views/ai-panel/index.jsx ===== */
 (function () {
+  const { useEffect, useRef, useState } = React;
+  const { useApp, Icon, aiPanelMeta, chatInput, energyCard, faultCard, agentEvents, rangeOptions, answerFor } = __export;
+// 1:1 还原:Figma 原稿资产(panel-art/card/spark/segmented-track/input-box)
+// + 绝对坐标文字层 + 第11轮交互(输入/分段/复选框/事件条目/抽屉/下拉)。
+// 坐标为面板内坐标(画布坐标 − 48,48),画布 1920×1080 固定。
+const S01 = "./assets/uploads/s01";
+
+// 通用文字:绝对定位 + 字号/行高/字重/颜色(字重 Regular=400 Medium=500 Bold=700)
+function T({ x, y, size, lh, weight = 400, color = "#191919", width, wrap, gradient, style, children }) {
+  const base = { left: x, top: y, fontSize: size, lineHeight: `${lh}px`, fontWeight: weight, color };
+  if (width) base.width = width;
+  if (wrap) base.whiteSpace = "normal";
+  if (gradient) {
+    base.backgroundImage = gradient;
+    base.WebkitBackgroundClip = "text";
+    base.backgroundClip = "text";
+    base.color = "transparent";
+  }
+  return (
+    <span className="ai-t" style={{ ...base, ...style }}>
+      {children}
+    </span>
+  );
+}
+
+// 资产图层:img 按原稿 1x 尺寸显示
+function Art({ src, x, y, w, h, alt = "" }) {
+  return (
+    <img
+      className="ai-art"
+      src={`${S01}/${src}`}
+      alt={alt}
+      style={{ left: x, top: y, width: w, height: h }}
+      draggable={false}
+    />
+  );
+}
+
+// 主页面 → 3D iframe 定位消息(第2批实现接收)
+function focusCabinet(id) {
+  const frame = document.querySelector(".cabinet-area-frame");
+  if (frame && frame.contentWindow) {
+    frame.contentWindow.postMessage({ type: "focusCabinet", id }, "*");
+  }
+}
+
 function AiPanel() {
+  const { openDetail, resolved } = useApp();
+  const [faultStat, hazardStat] = faultCard.stats;
+  const [mAvail, mReq] = faultCard.metrics;
+  const [mMedium, mLarge] = energyCard.metrics;
+  const [segManual, segAuto] = agentEvents.segments;
+
+  // —— 交互状态(默认值与静态截图一致) ——
+  const [seg, setSeg] = useState("manual");           // 分段:manual | auto
+  const [bizOnly, setBizOnly] = useState(false);       // 仅显示影响业务事件
+  const [selectedEvt, setSelectedEvt] = useState(null);// 选中事件 key
+  const [drawerOpen, setDrawerOpen] = useState(false); // 查看全部抽屉
+  const [range, setRange] = useState(aiPanelMeta.timeRange);
+  const [rangeOpen, setRangeOpen] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState(null);          // {q, phase:'thinking'|'done', text, locateId}
+  const inputRef = useRef(null);
+  const answerTimer = useRef(null);
+
+  // Esc 关闭回答卡/抽屉/下拉
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      setAnswer(null);
+      setDrawerOpen(false);
+      setRangeOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => () => clearTimeout(answerTimer.current), []);
+
+  // 时间轴胶囊点击 → 左侧对应事件选中(第3批 B 联动)
+  useEffect(() => {
+    const onSelect = (e) => {
+      const key = e.detail && e.detail.key;
+      if (key) setSelectedEvt(key);
+    };
+    window.addEventListener("s01:event-select", onSelect);
+    return () => window.removeEventListener("s01:event-select", onSelect);
+  }, []);
+
+  const sendQuestion = () => {
+    const q = question.trim();
+    if (!q) return;
+    const mock = answerFor(q);
+    setAnswer({ q, phase: "thinking", ...mock });
+    setQuestion("");
+    clearTimeout(answerTimer.current);
+    answerTimer.current = setTimeout(() => {
+      setAnswer((a) => (a ? { ...a, phase: "done" } : a));
+    }, 600);
+  };
+
+  const visibleList = seg === "manual" ? agentEvents.list : agentEvents.autoList;
+
   return (
     <aside className="ai-panel">
-      <span className="ai-panel-name">AI对话面板</span>
+      {/* —— 资产层(由底至上;panel-art-noevents 已去掉事件三角与分割线,由 DOM 渲染) —— */}
+      <Art src="panel-art-noevents@2x.png" x={0} y={0} w={484} h={1032} />
+      <Art src="card-fault@2x.png" x={25.75} y={271.5} w={429.5} h={162} />
+      <Art src="card-energy@2x.png" x={26.5} y={443} w={426.5} h={177} />
+      <Art src="spark-job@2x.png" x={45} y={402} w={178} h={18} />
+      <Art src="spark-req@2x.png" x={264} y={405} w={178} h={18} />
+      <Art src="spark-energy@2x.png" x={41} y={530} w={404} h={76} />
+      {/* 分段轨道(无胶囊)+ CSS 选中胶囊 */}
+      <Art src="segmented-track@2x.png" x={17} y={676} w={448} h={46} />
+      <span
+        className="ai-seg-pill"
+        style={{ left: seg === "manual" ? 27 : 251, top: 684 }}
+        aria-hidden="true"
+      />
+      <Art src="input-box@2x.png" x={8} y={952} w={468} h={72} />
+
+      {/* —— 文字层 —— */}
+      {/* 近一天(可点,展开下拉) */}
+      <button
+        type="button"
+        className="ai-range-btn"
+        style={{ left: 390, top: 10, width: 64, height: 28 }}
+        title="切换统计时间范围"
+        onClick={() => setRangeOpen((v) => !v)}
+      >
+        <T x={7} y={5.5} size={12} lh={20} color="#777">{range}</T>
+      </button>
+      {rangeOpen ? (
+        <>
+          <span className="ai-dropdown-mask" onClick={() => setRangeOpen(false)} aria-hidden="true" />
+          <div className="ai-dropdown" style={{ left: 392, top: 40 }}>
+            {rangeOptions.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                className={`ai-dropdown-item${opt === range ? " ai-dropdown-item-active" : ""}`}
+                onClick={() => { setRange(opt); setRangeOpen(false); }}
+              >
+                {opt}
+                {opt === range ? <Icon name="check" size="0.75rem" color="#0067D1" /> : null}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : null}
+
+      <T
+        x={52}
+        y={88}
+        size={16}
+        lh={24}
+        weight={700}
+        gradient="linear-gradient(90deg,#77C1EE 6.1%,#D270E1 51.5%,#F89E21 109.2%)"
+        style={{ letterSpacing: "0.32px" }}
+      >
+        算小维
+      </T>
+      <T x={101} y={88} size={16} lh={24} weight={700} color="#34465F" style={{ letterSpacing: "0.32px" }}>
+        在岗，健康守护中～
+      </T>
+
+      <T x={28} y={180} size={16} lh={24} weight={500}>守护效果</T>
+
+      <div
+        className="ai-guard-text"
+        style={{
+          left: 28.88,
+          top: 215,
+          width: 390,
+          backgroundImage:
+            "linear-gradient(90deg,#777 0%,#777 28.93%,#AD66FF 44.57%,#FF666B 55.45%,#FF9466 66.34%,#777 80.94%)",
+        }}
+      >
+        <div style={{ whiteSpace: "nowrap" }}>正在守护8个超节点，8192卡，13个训练作业，16个推理服务，业务</div>
+        <div style={{ whiteSpace: "nowrap" }}>均正常。目前共2项待人工处理的资源事件需关注</div>
+      </div>
+
+      {/* 故障与隐患卡片(右上 ^ 箭头热区:hover 圆底) */}
+      <T x={85} y={291} size={14} lh={22} weight={500}>{faultCard.title}</T>
+      <button type="button" className="ai-fold-hot" style={{ left: 414, top: 282 }} title="收起" />
+      <T x={85} y={315} size={12} lh={20} weight={500} color="#777">
+        {faultStat.label} <b className="c-red">{faultStat.num}</b>{faultStat.rest}
+      </T>
+      <T x={178} y={315} size={12} lh={20} weight={500} color="#777">
+        {hazardStat.label} <b className="c-gray">{hazardStat.num}</b>{hazardStat.rest}
+      </T>
+      <T x={355.92} y={289} size={20} lh={28} weight={700}>{faultCard.rate.value}</T>
+      <T x={399.45} y={296} size={12} lh={20} weight={500} color="#939393">{faultCard.rate.unit}</T>
+      <T x={349.24} y={317} size={12} lh={20} weight={500} color="#777">{faultCard.rate.label}</T>
+      <T x={45} y={346.27} size={12} lh={20} color="#777">{mAvail.label}</T>
+      <T x={45} y={364.28} size={24} lh={32} weight={500}>{mAvail.value}</T>
+      <T x={111} y={374.28} size={12} lh={20} color="#777">{mAvail.unit}</T>
+      <T x={264.06} y={349.24} size={12} lh={20} color="#777">{mReq.label}</T>
+      <T x={264.06} y={368.23} size={24} lh={32} weight={500}>{mReq.value}</T>
+      <T x={330.06} y={378.23} size={12} lh={20} color="#777">{mReq.unit}</T>
+
+      {/* 能效优化卡片 */}
+      <T x={85} y={463} size={14} lh={22} weight={500}>{energyCard.title}</T>
+      <button type="button" className="ai-fold-hot" style={{ left: 414, top: 454 }} title="收起" />
+      <T x={85} y={487} size={12} lh={20} weight={500} color="#777">{energyCard.status}</T>
+      <T x={356.72} y={461} size={20} lh={28} weight={700}>{energyCard.ratio.value}</T>
+      <T x={383.38} y={468} size={12} lh={20} weight={500} color="#939393">{energyCard.ratio.unit}</T>
+      <T x={320.24} y={489} size={12} lh={20} weight={500} color="#777">{energyCard.ratio.label}</T>
+      <T x={41.04} y={530} size={12} lh={20} color="#777">{mMedium.label}</T>
+      <T x={41.04} y={554} size={24} lh={32} weight={500}>{mMedium.value}</T>
+      <T x={93.04} y={564} size={12} lh={20} color="#777">{mMedium.unit}</T>
+      <T x={259.37} y={530} size={12} lh={20} color="#777">{mLarge.label}</T>
+      <T x={259.36} y={554} size={24} lh={32} weight={500}>{mLarge.value}</T>
+      <T x={311.37} y={564} size={12} lh={20} color="#777">{mLarge.unit}</T>
+
+      {/* 智能体事件标题 + 复选框 + 查看全部 */}
+      <T x={28} y={648} size={16} lh={24} weight={500}>{agentEvents.title}</T>
+      <button
+        type="button"
+        className={`ai-check${bizOnly ? " ai-check-on" : ""}`}
+        style={{ left: 233.47, top: 649 }}
+        title={agentEvents.filterLabel}
+        onClick={() => setBizOnly((v) => !v)}
+        aria-pressed={bizOnly}
+      >
+        {bizOnly ? <Icon name="check" size="0.625rem" color="#FFFFFF" strokeWidth={3} /> : null}
+      </button>
+      <T
+        x={257.47}
+        y={649}
+        size={14}
+        lh={22}
+        color="#777"
+        style={{ pointerEvents: "none" }}
+      >
+        {agentEvents.filterLabel}
+      </T>
+      <a
+        className="ai-events-link"
+        style={{ left: 400, top: 649 }}
+        onClick={() => setDrawerOpen(true)}
+      >
+        {agentEvents.viewAllLabel}
+      </a>
+
+      {/* 分段控件文字(选中 #191919 Medium / 未选中 #777)+ 点击切换 */}
+      <button type="button" className="ai-seg-hot" style={{ left: 27, top: 684, width: 204, height: 30 }} onClick={() => setSeg("manual")}>
+        <T x={55.05} y={4.87} size={14} lh={22} weight={500} color={seg === "manual" ? "#191919" : "#777"}>{segManual.label}</T>
+        <T x={133.06} y={4.87} size={14} lh={22} weight={700} color={seg === "manual" ? "#E02128" : "#777"}>{resolved ? 1 : segManual.count}</T>
+      </button>
+      <button type="button" className="ai-seg-hot" style={{ left: 251, top: 684, width: 204, height: 30 }} onClick={() => setSeg("auto")}>
+        <T x={55.05} y={4.5} size={14} lh={22} weight={500} color={seg === "auto" ? "#191919" : "#777"}>{segAuto.label}</T>
+        <T x={129.05} y={4.5} size={14} lh={22} weight={700} color={seg === "auto" ? "#191919" : "#777"}>{segAuto.count}</T>
+      </button>
+
+      {/* 事件列表(红三角图标与分割线为 DOM,随列表淡出);manual 3 条 / auto 1 条 */}
+      {(resolved ? visibleList.filter((ev) => ev.key === "evt-link-dirty") : visibleList).map((event, i) => {
+        const dimmed = seg === "manual" && bizOnly && !event.affectsBusiness;
+        const isAuto = seg === "auto";
+        const showDivider = i < visibleList.length - 1 && !(seg === "manual" && bizOnly && !visibleList[i + 1].affectsBusiness) && !dimmed;
+        return (
+          <div
+            key={event.key}
+            className={`ai-event-row${dimmed ? " ai-event-dimmed" : ""}${selectedEvt === event.key ? " ai-event-selected" : ""}`}
+            style={{ left: 28, top: 732 + i * 72 }}
+            onClick={() => {
+              if (isAuto) return;
+              setSelectedEvt(event.key);
+              focusCabinet(event.focusId);
+              // 200ms 后进入诊断详情(事件1→optical,事件2/3→qwen)
+              const target = event.key === "evt-link-dirty" ? "optical" : "qwen";
+              setTimeout(() => openDetail(target), 200);
+            }}
+          >
+            {isAuto ? (
+              <span className="ai-orbit" style={{ left: 5, top: 3 }} aria-hidden="true" />
+            ) : (
+              <img className="ai-event-alert" src={`${S01}/event-alert@2x.png`} alt="" draggable={false} />
+            )}
+            <T x={isAuto ? 30 : 32} y={0} size={14} lh={22} weight={500} width={340}>{event.title}</T>
+            <T x={380} y={1} size={12} lh={20} color="#777">{event.time}</T>
+            <T x={32} y={26} size={14} lh={22} width={396} color="#777">{event.desc}</T>
+            {showDivider ? <span className="ai-event-divider" aria-hidden="true" /> : null}
+          </div>
+        );
+      })}
+
+      {/* 底部输入框(第1批修正:全新落位,框体画布 68,1012,444×48) */}
+      <input
+        ref={inputRef}
+        className="ai-input2"
+        placeholder={chatInput.placeholder}
+        aria-label="输入问题"
+        value={question}
+        onChange={(e) => setQuestion(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") sendQuestion(); }}
+      />
+      {/* 发送按钮热区(框体右缘向左 44 起,40×40 圆) */}
+      <button
+        type="button"
+        className="ai-input-send-hot"
+        title="发送"
+        onClick={sendQuestion}
+      />
+
+      {/* 算小维回答卡(输入框正上方) */}
+      {answer ? (
+        <div className="ai-answer-card">
+          <button type="button" className="ai-answer-close" title="关闭" onClick={() => setAnswer(null)}>
+            <Icon name="x" size="0.875rem" color="#777777" />
+          </button>
+          <div className="ai-answer-q">{answer.q}</div>
+          {answer.phase === "thinking" ? (
+            <div className="ai-answer-thinking">
+              算小维思考中
+              <span className="ai-dot" />·<span className="ai-dot" />·<span className="ai-dot" />
+            </div>
+          ) : (
+            <div className="ai-answer-text">
+              {answer.text}
+              {answer.locateId ? (
+                <a className="ai-answer-locate" onClick={() => focusCabinet(answer.locateId)}>
+                  在机房中定位 →
+                </a>
+              ) : null}
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* 查看全部抽屉(画布右侧 480×1080,面板内偏移定位) */}
+      {drawerOpen ? (
+        <>
+          <span className="ai-drawer-mask" onClick={() => setDrawerOpen(false)} aria-hidden="true" />
+          <div className="ai-drawer">
+            <div className="ai-drawer-head">
+              <span className="ai-drawer-title">{agentEvents.title}</span>
+              <button type="button" className="ai-drawer-close" title="关闭" onClick={() => setDrawerOpen(false)}>
+                <Icon name="x" size="1rem" color="#777777" />
+              </button>
+            </div>
+            <ul className="ai-drawer-list">
+              {agentEvents.drawerList.map((item) => (
+                <li key={item.key} className="ai-drawer-item">
+                  <div className="ai-drawer-item-top">
+                    <span className="ai-drawer-item-title">{item.title}</span>
+                    <span className={`ai-status-tag ai-status-tag-${item.status}`}>{item.status}</span>
+                  </div>
+                  <span className="ai-drawer-item-time">{item.time}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
+      ) : null}
     </aside>
   );
 }
   Object.assign(__export, { AiPanel });
 })();
 
+/* ===== src/mock/metrics.js ===== */
+(function () {
+// Layer 2: 首页指标区 mock 数据 — 基础设施指标 + 训练/推理作业状态
+const infrastructureMetrics = [
+  { key: "fault", label: "故障数", value: "2", unit: "", icon: "fault", tone: "error" },
+  { key: "hazard", label: "隐患数", value: "0", unit: "", icon: "hazard", tone: "warning" },
+  { key: "npu", label: "NPU利用率", value: "76.4", unit: "%", icon: "npu", tone: "info" },
+  { key: "hbm", label: "HBM利用率", value: "74.2", unit: "%", icon: "hbm", tone: "purple" },
+  { key: "energy", label: "能耗", value: "771", unit: "kW", icon: "energy", tone: "success" },
+];
+
+// 2×2 小图标网格:左上链路、右上三角警示、左下下降趋势、右下绿色实心播放
+const jobStatusIcons = [
+  { key: "link", icon: "link", tone: "muted" },
+  { key: "alert", icon: "triangle-alert", tone: "muted" },
+  { key: "trend-down", icon: "trending-down", tone: "muted" },
+  { key: "play", icon: "play", tone: "success" },
+];
+
+const jobStatuses = [
+  {
+    key: "training",
+    label: "训练作业",
+    status: "正常",
+    total: 13,
+  },
+  {
+    key: "inference",
+    label: "推理服务",
+    status: "正常",
+    total: 16,
+  },
+];
+  Object.assign(__export, { infrastructureMetrics, jobStatusIcons, jobStatuses });
+})();
+
+/* ===== src/mock/workloads.js ===== */
+(function () {
+// Layer 2: S02 业务视图 mock 数据 — 训练作业 / 推理服务
+// status: "interrupt"(中断,含待人工) | "degrade"(劣化) | "stall"(卡死) | "normal"(正常运行)
+
+const INFER_METRICS = [
+  { key: "total", label: "服务总数", bg: "#E6F2FD", icon: "st-total", value: 16 },
+  { key: "interrupt", label: "中断", bg: "#FEE7E8", icon: "st-interrupt", value: 1, numColor: "#E02128" },
+  { key: "stall", label: "卡死", bg: "#FEF5E8", icon: "st-stall", value: 0 },
+  { key: "degrade", label: "劣化", bg: "rgba(253,229,92,.6)", icon: "st-degrade", value: 1, numColor: "#C76207" },
+  { key: "normal", label: "正常运行", bg: "#E7FBF2", icon: "st-normal", value: 14 },
+];
+
+const TRAIN_METRICS = [
+  { key: "total", label: "运行总数", bg: "#E6F2FD", icon: "st-total", value: 13 },
+  { key: "interrupt", label: "中断", bg: "#FEE7E8", icon: "st-interrupt", value: 0 },
+  { key: "stall", label: "卡死", bg: "#FEF5E8", icon: "st-stall", value: 0 },
+  { key: "degrade", label: "劣化", bg: "rgba(253,229,92,.6)", icon: "st-degrade", value: 0 },
+  { key: "normal", label: "正常运行", bg: "#E7FBF2", icon: "st-normal", value: 13 },
+];
+
+// 收起态摘要(2×2 小图标 + 两行文字)
+const COLLAPSED_ICONS = {
+  infra: [
+    { icon: "mini-alert-red", bg: "#FEE7E8" },
+    { icon: "mini-security", bg: "#F3F3F3" },
+    { icon: "mini-cpu", bg: "#F3F3F3" },
+    { icon: "mini-more", bg: "#F3F3F3", opacity: 0.58 },
+  ],
+  job: [
+    { icon: "mini-interrupt", bg: "#F3F3F3" },
+    { icon: "mini-alert", bg: "#F3F3F3" },
+    { icon: "mini-degrade", bg: "#F3F3F3" },
+    { icon: "mini-play", bg: "#E7FBF2" },
+  ],
+};
+
+// 推理服务 16 个(异常在前)
+const INFER_SERVICES = [
+  {
+    key: "svc-qwen15", name: "Qwen-1.5B 在线服务", icon: "qwen",
+    status: "interrupt", statusLabel: "中断 · 待人工处理", time: "08-22 09:02",
+    successRate: "99.94", requests: "124860 / 124781 / 79", failed: "79",
+    npuCards: 32, ttft: "182", tpot: "23.6", tokens: "8.42",
+    manual: "1 / 29",
+  },
+  {
+    key: "svc-qwen14", name: "Qwen-14B", icon: "qwen",
+    status: "degrade", statusLabel: "劣化", time: "08-22 08:10",
+    successRate: "99.97", requests: "286420 / 286332 / 88", failed: "88",
+    npuCards: 48, ttft: "146", tpot: "18.2", tokens: "16.8",
+    manual: "0 / 19",
+  },
+  {
+    key: "svc-vision3b", name: "视觉理解服务-3B", icon: "cube",
+    status: "normal", statusLabel: "正常运行", time: "08-22 07:55",
+    successRate: "99.93", requests: "68210 / 68163 / 47", failed: "47",
+    npuCards: 16, ttft: "238", tpot: "31.4", tokens: "3.21",
+    manual: "0 / 46",
+  },
+  {
+    key: "svc-copilot", name: "代码生成 Copilot-1.5B", icon: "cube",
+    status: "normal", statusLabel: "正常运行", time: "08-22 06:26",
+    successRate: "99.95", requests: "47380 / 47358 / 22", failed: "22",
+    npuCards: 24, ttft: "520", tpot: "66.8", tokens: "2.08",
+    manual: "0 / 28",
+  },
+  { key: "svc-qwen7b", name: "Qwen-7B 对话服务", icon: "qwen", status: "normal", statusLabel: "正常运行", time: "08-22 06:10", successRate: "99.96", requests: "198340 / 198287 / 53", failed: "53", npuCards: 32, ttft: "164", tpot: "21.4", tokens: "12.6", manual: "0 / 34" },
+  { key: "svc-qwen72b", name: "Qwen-72B 长文本", icon: "qwen", status: "normal", statusLabel: "正常运行", time: "08-22 05:48", successRate: "99.91", requests: "42860 / 42819 / 41", failed: "41", npuCards: 128, ttft: "312", tpot: "42.6", tokens: "5.18", manual: "0 / 12" },
+  { key: "svc-asr", name: "语音识别 ASR-1B", icon: "cube", status: "normal", statusLabel: "正常运行", time: "08-22 05:20", successRate: "99.98", requests: "88120 / 88098 / 22", failed: "22", npuCards: 16, ttft: "96", tpot: "12.8", tokens: "6.74", manual: "0 / 41" },
+  { key: "svc-tts", name: "语音合成 TTS-0.6B", icon: "cube", status: "normal", statusLabel: "正常运行", time: "08-22 04:55", successRate: "99.99", requests: "15640 / 15636 / 4", failed: "4", npuCards: 8, ttft: "88", tpot: "11.2", tokens: "2.44", manual: "0 / 18" },
+  { key: "svc-bge", name: "Embedding-bge-m3", icon: "cube", status: "normal", statusLabel: "正常运行", time: "08-22 04:30", successRate: "99.97", requests: "214580 / 214498 / 82", failed: "82", npuCards: 16, ttft: "42", tpot: "8.6", tokens: "18.9", manual: "0 / 52" },
+  { key: "svc-rerank", name: "Rerank-v2", icon: "cube", status: "normal", statusLabel: "正常运行", time: "08-22 04:12", successRate: "99.96", requests: "96840 / 96801 / 39", failed: "39", npuCards: 8, ttft: "54", tpot: "9.4", tokens: "7.02", manual: "0 / 25" },
+  { key: "svc-ocr", name: "OCR 文档解析", icon: "cube", status: "normal", statusLabel: "正常运行", time: "08-22 03:48", successRate: "99.94", requests: "64180 / 64121 / 59", failed: "59", npuCards: 24, ttft: "204", tpot: "28.6", tokens: "4.36", manual: "0 / 33" },
+  { key: "svc-mm-retrieval", name: "多模态检索", icon: "cube", status: "normal", statusLabel: "正常运行", time: "08-22 03:20", successRate: "99.95", requests: "78260 / 78203 / 57", failed: "57", npuCards: 32, ttft: "176", tpot: "24.2", tokens: "9.14", manual: "0 / 27" },
+  { key: "svc-agent", name: "智能客服 Agent", icon: "cube", status: "normal", statusLabel: "正常运行", time: "08-22 02:58", successRate: "99.92", requests: "112430 / 112278 / 152", failed: "152", npuCards: 16, ttft: "148", tpot: "19.8", tokens: "11.2", manual: "0 / 45" },
+  { key: "svc-nllb", name: "翻译服务 NLLB", icon: "cube", status: "normal", statusLabel: "正常运行", time: "08-22 02:34", successRate: "99.98", requests: "134890 / 134856 / 34", failed: "34", npuCards: 16, ttft: "112", tpot: "15.6", tokens: "8.88", manual: "0 / 31" },
+  { key: "svc-summ", name: "摘要生成 Summ-3B", icon: "cube", status: "normal", statusLabel: "正常运行", time: "08-22 02:10", successRate: "99.96", requests: "57620 / 57588 / 32", failed: "32", npuCards: 16, ttft: "134", tpot: "17.4", tokens: "5.62", manual: "0 / 22" },
+  { key: "svc-rag", name: "知识库问答 RAG", icon: "cube", status: "normal", statusLabel: "正常运行", time: "08-22 01:45", successRate: "99.93", requests: "102340 / 102247 / 93", failed: "93", npuCards: 24, ttft: "188", tpot: "26.1", tokens: "7.78", manual: "0 / 38" },
+];
+
+// 训练作业 13 个(全部正常运行;字段:进度|步数|卡数|MFU|迭代耗时|Loss|断点续训/守护)
+const TRAIN_JOBS = [
+  { key: "job-pangu38", name: "Pangu-38B 预训练", progress: "62.4", steps: "186000 / 300000", npuCards: 1024, mfu: "52.3", iterTime: "1.82", loss: "1.734", manual: "0 / 38", time: "08-22 09:00" },
+  { key: "job-pangu135", name: "Pangu-135B 预训练", progress: "41.8", steps: "84200 / 201600", npuCards: 2048, mfu: "48.6", iterTime: "3.94", loss: "2.106", manual: "0 / 52", time: "08-22 08:40" },
+  { key: "job-qwen72-sft", name: "Qwen-72B SFT", progress: "78.2", steps: "94800 / 121200", npuCards: 512, mfu: "56.8", iterTime: "1.24", loss: "0.842", manual: "0 / 26", time: "08-22 08:15" },
+  { key: "job-ds3-lora", name: "DeepSeek-V3 LoRA 微调", progress: "35.6", steps: "42600 / 119600", npuCards: 256, mfu: "44.2", iterTime: "0.86", loss: "1.284", manual: "0 / 19", time: "08-22 07:50" },
+  { key: "job-vit22", name: "多模态 ViT-22B 预训练", progress: "55.1", steps: "128400 / 233000", npuCards: 1024, mfu: "51.4", iterTime: "2.48", loss: "1.918", manual: "0 / 44", time: "08-22 07:25" },
+  { key: "job-whisper", name: "语音大模型 Whisper-L 微调", progress: "82.7", steps: "76800 / 92800", npuCards: 128, mfu: "58.2", iterTime: "0.64", loss: "0.612", manual: "0 / 16", time: "08-22 07:00" },
+  { key: "job-dlrm", name: "推荐模型 DLRM 训练", progress: "91.3", steps: "412000 / 451400", npuCards: 64, mfu: "62.8", iterTime: "0.22", loss: "0.318", manual: "0 / 61", time: "08-22 06:35" },
+  { key: "job-starcoder", name: "代码模型 StarCoder-15B 续训", progress: "48.9", steps: "96200 / 196800", npuCards: 256, mfu: "47.6", iterTime: "1.08", loss: "1.452", manual: "0 / 23", time: "08-22 06:10" },
+  { key: "job-rm7b", name: "RLHF 奖励模型 RM-7B", progress: "67.4", steps: "58200 / 86300", npuCards: 64, mfu: "54.1", iterTime: "0.42", loss: "0.724", manual: "0 / 18", time: "08-22 05:45" },
+  { key: "job-sdxl", name: "文生图 SDXL 微调", progress: "73.8", steps: "88400 / 119800", npuCards: 128, mfu: "49.8", iterTime: "1.62", loss: "0.968", manual: "0 / 21", time: "08-22 05:20" },
+  { key: "job-embed-cl", name: "Embedding 对比学习", progress: "88.2", steps: "342000 / 387800", npuCards: 64, mfu: "60.4", iterTime: "0.18", loss: "0.246", manual: "0 / 36", time: "08-22 04:55" },
+  { key: "job-med-sft", name: "医疗问答 SFT-13B", progress: "59.6", steps: "64800 / 108700", npuCards: 128, mfu: "53.2", iterTime: "0.94", loss: "1.104", manual: "0 / 28", time: "08-22 04:30" },
+  { key: "job-fin-pt", name: "金融大模型 增量预训练", progress: "44.2", steps: "52400 / 118500", npuCards: 512, mfu: "46.8", iterTime: "2.16", loss: "1.628", manual: "0 / 33", time: "08-22 04:05" },
+];
+  Object.assign(__export, { INFER_METRICS, TRAIN_METRICS, COLLAPSED_ICONS, INFER_SERVICES, TRAIN_JOBS });
+})();
+
 /* ===== src/views/metrics-area/index.jsx ===== */
 (function () {
-function MetricsArea() {
+  const { useEffect, useState } = React;
+  const { useApp, infrastructureMetrics, jobStatuses, INFER_METRICS, TRAIN_METRICS, COLLAPSED_ICONS } = __export;
+const S02 = "./assets/uploads/s02";
+const S01 = "./assets/uploads/s01";
+
+// 通用文字
+function T({ x, y, size, lh, weight = 400, color = "#191919", children }) {
+  return (
+    <span
+      className="mt-t"
+      style={{ left: x, top: y, fontSize: size, lineHeight: `${lh}px`, fontWeight: weight, color }}
+    >
+      {children}
+    </span>
+  );
+}
+
+// 小图标 12 显示在 24×24 圆底托上(托底色按规格;mini-more 半透明)
+function MiniIcon({ icon, bg, opacity }) {
+  return (
+    <span className="mx-mini" style={{ background: bg }}>
+      <img src={`${S02}/${icon}@2x.png`} alt="" style={{ opacity }} draggable={false} />
+    </span>
+  );
+}
+
+// 收起摘要段(宽 156)
+function Collapsed({ title, icons, line1, line2, active, onClick }) {
+  return (
+    <div
+      className={`mx-collapsed${active ? " mx-collapsed-active" : ""}`}
+      onClick={onClick}
+      title={title}
+    >
+      <T x={0} y={0} size={18} lh={26} weight={500}>{title}</T>
+      <div className="mx-collapsed-body">
+        <div className="mx-mini-grid">
+          {icons.map((it) => (
+            <MiniIcon key={it.icon} icon={it.icon} bg={it.bg} opacity={it.opacity} />
+          ))}
+        </div>
+        <div className="mx-collapsed-text">
+          <span className="mx-collapsed-line1">{line1}</span>
+          <span className="mx-collapsed-line2">{line2}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 展开段指标块(148×72;40 圆底托按规格底色 + 18 图标)
+function MetricBlock({ m, selected, onClick }) {
+  return (
+    <button
+      type="button"
+      className={`mx-block${selected ? " mx-block-selected" : ""}`}
+      onClick={onClick}
+      title={m.label}
+    >
+      <span className="mx-block-icon" style={{ background: selected ? "rgba(255,255,255,.6)" : m.bg }}>
+        <img src={`${S02}/${m.icon}@2x.png`} alt="" draggable={false} />
+      </span>
+      <span className="mx-block-text">
+        <span className="mx-block-label">{m.label}</span>
+        <span className="mx-block-value" style={m.numColor ? { color: m.numColor } : undefined}>
+          {m.value}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+// 展开段(宽 886)
+function Expanded({ title, metrics, selectedKey, onSelect }) {
+  return (
+    <div className="mx-expanded">
+      <T x={0} y={0} size={18} lh={26} weight={500}>{title}</T>
+      <div className="mx-blocks">
+        {metrics.map((m) => (
+          <MetricBlock
+            key={m.key}
+            m={m}
+            selected={selectedKey === m.key}
+            onClick={() => onSelect(m.key)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MetricsArea({ onFilterChange }) {
+  const { view, setView, resolved } = useApp();
+  const [training, inference] = jobStatuses;
+  const [fault, hazard, npu, hbm, energy] = infrastructureMetrics;
+  const [selKey, setSelKey] = useState("total");
+
+  // 视图切换时重置选中块(过滤随之回 total)
+  useEffect(() => {
+    setSelKey("total");
+    if (onFilterChange) onFilterChange("total");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
+
+  const expanded = view === "train" ? "train" : view === "infer" ? "infer" : null;
+  const metrics = expanded === "train" ? TRAIN_METRICS : INFER_METRICS;
+
   return (
     <section className="metrics-area">
-      <span className="metrics-area-name">指标区域</span>
+      {view === "home" ? (
+        <img className="mt-bg" src={`${S01}/metrics-bg@2x.png`} alt="" draggable={false} />
+      ) : null}
+
+      {/* —— home 态:原版静态文字(与上一版完全一致) —— */}
+      {view === "home" ? (
+        <>
+          <T x={40} y={20} size={18} lh={26} weight={500}>基础设施</T>
+          <T x={990} y={20} size={18} lh={26} weight={500}>{training.label}</T>
+          <T x={1178} y={20} size={18} lh={26} weight={500}>{inference.label}</T>
+
+          <T x={98} y={71} size={12} lh={20} color="#777">{fault.label}</T>
+          <T x={98} y={93} size={24} lh={32} weight={700} color="#E02128">{resolved ? "1" : fault.value}</T>
+
+          <T x={290.5} y={71} size={12} lh={20} color="#777">{hazard.label}</T>
+          <T x={290.5} y={93} size={24} lh={32} weight={700}>{hazard.value}</T>
+
+          <T x={483} y={71} size={12} lh={20} color="#777">{npu.label}</T>
+          <T x={483} y={93} size={24} lh={32} weight={700}>{npu.value}</T>
+          <T x={536} y={103} size={12} lh={20} color="#777">{npu.unit}</T>
+
+          <T x={675.5} y={71} size={12} lh={20} color="#777">{hbm.label}</T>
+          <T x={675.5} y={93} size={24} lh={32} weight={700}>{hbm.value}</T>
+          <T x={728.5} y={103} size={12} lh={20} color="#777">{hbm.unit}</T>
+
+          <T x={868} y={71} size={12} lh={20} color="#777">{energy.label}</T>
+          <T x={868} y={93} size={24} lh={32} weight={700}>{energy.value}</T>
+          <T x={915} y={103} size={12} lh={20} color="#777">{energy.unit}</T>
+
+          <T x={1058} y={71} size={24} lh={32} weight={500} color="#09AA71">{training.status}</T>
+          <T x={1058} y={105} size={12} lh={20} color="#777">总数 {training.total} 个</T>
+          <T x={1246} y={71} size={24} lh={32} weight={500} color="#09AA71">{inference.status}</T>
+          <T x={1246} y={105} size={12} lh={20} color="#777">总数 {inference.total} 个</T>
+
+          {/* 点击热区:训练作业 / 推理服务 */}
+          <button
+            type="button"
+            className="mx-entry-hot"
+            style={{ left: 975, top: 6, width: 205, height: 142 }}
+            title="查看训练作业"
+            onClick={() => setView("train")}
+          />
+          <button
+            type="button"
+            className="mx-entry-hot"
+            style={{ left: 1187, top: 6, width: 200, height: 142 }}
+            title="查看推理服务"
+            onClick={() => setView("infer")}
+          />
+        </>
+      ) : (
+        /* —— 业务视图态:三段横排(展开段替换当前业务) —— */
+        <div className="mx-expand-wrap">
+          <Collapsed
+            title="基础设施"
+            icons={COLLAPSED_ICONS.infra}
+            line1={<><b className="mx-num-red">3</b><em className="mx-unit-red">项异常</em></>}
+            line2="NPU 1024 卡"
+            onClick={() => setView("home")}
+          />
+          <span className="mx-sep" />
+          {expanded === "train" ? (
+            <Expanded
+              title="训练作业"
+              metrics={metrics}
+              selectedKey={selKey}
+              onSelect={(k) => { setSelKey(k); if (onFilterChange) onFilterChange(k); }}
+            />
+          ) : (
+            <Collapsed
+              title="训练作业"
+              icons={COLLAPSED_ICONS.job}
+              line1={<b className="mx-num-green">正常</b>}
+              line2="总数 13 个"
+              onClick={() => setView("train")}
+            />
+          )}
+          <span className="mx-sep" />
+          {expanded === "infer" ? (
+            <Expanded
+              title="推理服务"
+              metrics={metrics}
+              selectedKey={selKey}
+              onSelect={(k) => { setSelKey(k); if (onFilterChange) onFilterChange(k); }}
+            />
+          ) : (
+            <Collapsed
+              title="推理服务"
+              icons={COLLAPSED_ICONS.job}
+              line1={<><b className="mx-num-red">2</b><em className="mx-unit-red">项异常</em></>}
+              line2="总数 16 个"
+              onClick={() => setView("infer")}
+            />
+          )}
+        </div>
+      )}
     </section>
   );
 }
   Object.assign(__export, { MetricsArea });
 })();
 
+/* ===== src/mock/cabinet.js ===== */
+(function () {
+// Layer 2: 机柜绘制区域 mock 数据 — 场景标题与时间
+// (工具条为原稿 PNG 资产 + 画布坐标热区,见 views/cabinet-area)
+const cabinetScene = {
+  title: "上海推理模型B5集群",
+  time: "2026.11.08 12:10:00",
+};
+  Object.assign(__export, { cabinetScene });
+})();
+
 /* ===== src/views/cabinet-area/index.jsx ===== */
 (function () {
+  const { useEffect, useState } = React;
+  const { Icon, cabinetScene } = __export;
+const S01 = "./assets/uploads/s01";
+
+// 工具条透明热区(第11轮 2.5:接功能 + 左侧 tooltip)
+const HOT_ZONES = [
+  { key: "refresh", label: "重置视角", cx: 1868, cy: 731, action: "reset" },
+  { key: "cube", label: "3D 视图", cx: 1868, cy: 763, action: null },
+  { key: "expand", label: "全屏", cx: 1868, cy: 794, action: "fullscreen" },
+  { key: "plus", label: "放大", cx: 1868, cy: 827.5, action: "zoomIn" },
+  { key: "minus", label: "缩小", cx: 1868, cy: 860, action: "zoomOut" },
+];
+
+// 主页面 → 3D iframe 消息
+function postTo3D(msg) {
+  const frame = document.querySelector(".cabinet-area-frame");
+  if (frame && frame.contentWindow) {
+    frame.contentWindow.postMessage(msg, "*");
+  }
+}
+
+// 机柜区 · 1:1 + 第11轮 2.5 工具条交互(默认静态不变)
 function CabinetArea() {
+  const [zoomPct, setZoomPct] = useState(100);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  // 3D → 主页面:zoomChanged 实时更新「100%」文字
+  useEffect(() => {
+    const onMsg = (e) => {
+      const msg = e.data || {};
+      if (msg.type === "zoomChanged" && typeof msg.value === "number") {
+        setZoomPct(msg.value);
+      }
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
+
+  // Esc 退出全屏(恢复默认视角与 100%)
+  useEffect(() => {
+    if (!fullscreen) return undefined;
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        setFullscreen(false);
+        postTo3D({ type: "reset" });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fullscreen]);
+
+  const onHot = (zone) => {
+    if (zone.action === "reset") postTo3D({ type: "reset" });
+    else if (zone.action === "zoomIn") postTo3D({ type: "zoom", step: 1 });
+    else if (zone.action === "zoomOut") postTo3D({ type: "zoom", step: -1 });
+    else if (zone.action === "fullscreen") {
+      setFullscreen(true);
+      postTo3D({ type: "reset" }); // 进入全屏:zoom 重置 100%
+    }
+  };
+
   return (
-    <section className="cabinet-area">
-      <iframe
-        className="cabinet-area-frame"
-        src="../preview-3d/index.page.html"
-        title="机柜绘制区域 3D 视图"
-      />
-    </section>
+    <>
+      {/* 3D 视口(flex 流内;全屏时覆盖右侧主区 x548–1904 y48–1080) */}
+      <div className={fullscreen ? "cabinet-area cabinet-area-fullscreen" : "cabinet-area"}>
+        {!fullscreen ? <span className="cabinet-bg-bleed" aria-hidden="true" /> : null}
+        <iframe
+          className="cabinet-area-frame"
+          src="../preview-3d/index.page.html"
+          title="机柜绘制区域 3D 视图"
+        />
+        {fullscreen ? (
+          <button
+            type="button"
+            className="cabinet-exit-fullscreen"
+            onClick={() => {
+              setFullscreen(false);
+              postTo3D({ type: "reset" });
+            }}
+          >
+            <Icon name="minimize" size="0.75rem" color="#191919" strokeWidth={1.5} />
+            退出全屏
+          </button>
+        ) : null}
+      </div>
+
+      {/* 标题:文字框左上角画布 (556,263) */}
+      <span className="cabinet-area-title">{cabinetScene.title}</span>
+
+      {/* 时间:13px,墨迹右缘对齐 x1893,顶 y270 */}
+      <span className="cabinet-area-time">{cabinetScene.time}</span>
+
+      {/* 右侧工具条:原稿 PNG + 叠加刷新图标与 zoom 文字(实时) */}
+      <img className="cabinet-toolbar" src={`${S01}/toolbar@2x.png`} alt="" draggable={false} />
+      <span
+        className="cabinet-toolbar-refresh"
+        onClick={() => postTo3D({ type: "reset" })}
+        style={{ cursor: "pointer" }}
+        role="button"
+        aria-label="重置视角"
+      >
+        <Icon name="refresh-cw" size="0.875rem" strokeWidth={1.5} color="#777777" />
+      </span>
+      <span className="cabinet-toolbar-zoom">{zoomPct}%</span>
+
+      {/* 透明热区(hover 显示左侧深色 tooltip) */}
+      {HOT_ZONES.map((zone) => (
+        <button
+          key={zone.key}
+          type="button"
+          className="cabinet-toolbar-hot"
+          style={{ left: zone.cx - 14, top: zone.cy - 14 }}
+          data-tip={zone.label}
+          aria-label={zone.label}
+          onClick={() => onHot(zone)}
+        />
+      ))}
+    </>
   );
 }
   Object.assign(__export, { CabinetArea });
 })();
 
+/* ===== src/mock/timeline.js ===== */
+(function () {
+// Layer 2: 集群保障时间轴 mock 数据 — 三组图例、时间区间与事件胶囊
+const timelineMeta = {
+  title: "集群保障时间轴",
+  rangeLabel: "近24h",
+};
+
+const timelineRange = {
+  start: "11:54:00",
+  end: "12:13:00",
+  now: "12:10:00",
+};
+
+// 三组图例(组间竖线分隔):故障/隐患/节能机会 | 待人工处理/自动处理中/已闭环 | 影响到业务
+const legendGroups = [
+  [
+    { key: "fault", label: "故障" },
+    { key: "hazard", label: "隐患" },
+    { key: "saving", label: "节能机会" },
+  ],
+  [
+    { key: "manual", label: "待人工处理" },
+    { key: "auto", label: "自动处理中" },
+    { key: "closed", label: "已闭环" },
+  ],
+  [{ key: "impact", label: "影响到业务" }],
+];
+
+// 事件胶囊(轨道上):白底胶囊 = 灰描边三角(已闭环隐患) + 红实心圆白三角(故障)
+// badge:hand = 右上角红描边小圆(红手掌);hand-star = 红描边小胶囊(红手掌+橙八角星)
+const timelineEvents = [
+  { key: "evt-1200", time: "12:00:00", badge: "hand" },
+  { key: "evt-1204", time: "12:04:00", badge: "hand-star" },
+];
+  Object.assign(__export, { timelineMeta, timelineRange, legendGroups, timelineEvents });
+})();
+
+/* ===== src/utils/time-scale.js ===== */
+(function () {
+// 时间轴刻度换算工具：将 "HH:MM:SS" 时间转换为区间内的百分比位置
+
+function timeToMinutes(time) {
+  const [h, m, s] = time.split(":").map(Number);
+  return h * 60 + m + s / 60;
+}
+
+/**
+ * 计算 time 在 [start, end] 区间内的位置比例（0 ~ 1）
+ * @param {string} time "HH:MM:SS"
+ * @param {{start: string, end: string}} range
+ * @returns {number} 0 ~ 1
+ */
+function fractionOf(time, range) {
+  const start = timeToMinutes(range.start);
+  const end = timeToMinutes(range.end);
+  const current = timeToMinutes(time);
+  return (current - start) / (end - start);
+}
+
+/**
+ * 生成 [start, end] 内每分钟一个的时刻列表
+ * @param {{start: string, end: string}} range
+ * @returns {string[]} "HH:MM:SS" 数组
+ */
+function minuteTicks(range) {
+  const start = timeToMinutes(range.start);
+  const end = timeToMinutes(range.end);
+  const ticks = [];
+  for (let t = Math.ceil(start); t <= Math.floor(end); t++) {
+    const h = Math.floor(t / 60);
+    const m = t % 60;
+    ticks.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`);
+  }
+  return ticks;
+}
+  Object.assign(__export, { timeToMinutes, fractionOf, minuteTicks });
+})();
+
 /* ===== src/views/timeline-area/index.jsx ===== */
 (function () {
+  const { timelineMeta, timelineRange, timeToMinutes, minuteTicks, useApp, Icon } = __export;
+// 1:1 还原:tl-bg / tl-track / tl-now / tl-event-* / lg-*.svg 原稿资产 + 绝对坐标文字。
+// 卡片画布区域 (556,929,1340×126),组件 absolute 定位到画布;内部坐标 = 画布坐标 − (556,929)。
+const S01 = "./assets/uploads/s01";
+
+// 图例(x 为 16×16 图标左缘,文字在图标右 22px、垂直居中)
+const LEGEND = [
+  { icon: "lg-fault", label: "故障", x: 148 },
+  { icon: "lg-risk", label: "隐患", x: 208 },
+  { icon: "lg-energy", label: "节能机会", x: 268 },
+  { sep: true, x: 352 },
+  { icon: "lg-manual", label: "待人工处理", x: 367 },
+  { icon: "lg-auto", label: "自动处理中", x: 463 },
+  { icon: "lg-closed", label: "已闭环", x: 559 },
+  { sep: true, x: 631 },
+  { icon: "lg-impact", label: "影响到业务", x: 646 },
+];
+
 function TimelineArea() {
+  const { openDetail, resolved } = useApp();
+  const ticks = minuteTicks(timelineRange);
+  const nowOffset = timeToMinutes(timelineRange.now) - timeToMinutes(timelineRange.start);
+  // 刻度中心 x = 48 + 65.4737·i(卡内);i = nowOffset 一格由 tl-now 标签代替
+  const tickCenter = (i) => 48 + 65.4737 * i;
+
   return (
     <section className="timeline-area">
-      <span className="timeline-area-name">时间轴区域</span>
+      {/* 卡片底 + 轨道 + 当前时间 + 两枚融球事件胶囊
+          (tl-now 画布 x1620 → 卡内 1064;事件 SVG 含外扩,主体左上画布
+          (979.51/1205.24, 989.15) → SVG 左上卡内 (411, 36.6) / (636.84, 36.6)) */}
+      <img className="tl-img" src={`${S01}/tl-bg.svg`} alt="" style={{ left: 0, top: 0, width: 1340, height: 126 }} />
+      <img className="tl-img" src={`${S01}/tl-track.svg`} alt="" style={{ left: 20, top: 70.68, width: 1304, height: 10 }} />
+      <img className="tl-img" src={`${S01}/tl-now.svg`} alt="" style={{ left: 1064, top: 70.68, width: 64, height: 41 }} />
+      {/* 事件胶囊(hover 提示卡 + 点击联动左侧选中与 3D 定位) */}
+      {[
+        { img: "tl-event-01.svg", x: 411, evKey: "evt-link-dirty", focusId: "A-15", tip: ["12:00:40 光链路脏污，待清污", "计算柜11 · 待人工处理"] },
+        {
+          img: "tl-event-02.svg", x: 636.84, evKey: "evt-npu-linkdown", focusId: "D-08",
+          tip: resolved
+            ? ["12:04:10 NPU网口linkdown", "SuperpodD · 计算柜08 · 影响业务 · 已闭环"]
+            : ["12:04:10 NPU网口linkdown", "SuperpodD · 计算柜08 · 影响业务 · 待人工处理"],
+        },
+      ].map((ev) => (
+        <span
+          key={ev.img}
+          className="tl-event-hot"
+          style={{ left: ev.x, top: 36.6, width: ev.img.endsWith("01.svg") ? 93 : 115, height: 59 }}
+          tabIndex={0}
+          role="button"
+          aria-label={ev.tip[0]}
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent("s01:event-select", { detail: { key: ev.evKey } }));
+            const frame = document.querySelector(".cabinet-area-frame");
+            if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: "focusCabinet", id: ev.focusId }, "*");
+            openDetail(ev.evKey === "evt-link-dirty" ? "optical" : "qwen");
+          }}
+        >
+          {resolved && ev.evKey === "evt-npu-linkdown" ? (
+            /* 已闭环版:灰三角 + 灰实心圆白三角 + 对勾徽标(替换红圆/手掌/八角星) */
+            <span className="tl-closed-pill" aria-hidden="true">
+              <span className="tl-closed-tri-wrap" aria-hidden="true">
+                <Icon name="triangle-alert" size="0.875rem" color="#AEAEAE" strokeWidth={1.2} />
+              </span>
+              <span className="tl-closed-circle"><span className="tl-closed-mini-tri" /></span>
+              <span className="tl-closed-badge">
+                <img src={`${S01}/lg-closed.svg`} alt="" draggable={false} />
+              </span>
+            </span>
+          ) : (
+            <img className="tl-img tl-event-pill" src={`${S01}/${ev.img}`} alt="" style={{ left: 0, top: 0, width: "100%", height: "100%" }} />
+          )}
+          <span className="tl-event-tip">
+            <span className="tl-event-tip-title">{ev.tip[0]}</span>
+            <span className="tl-event-tip-sub">{ev.tip[1]}</span>
+          </span>
+        </span>
+      ))}
+
+      {/* 标题 */}
+      <span className="tl-t" style={{ left: 20, top: 16.68, fontSize: 16, lineHeight: "24px", fontWeight: 500 }}>
+        {timelineMeta.title}
+      </span>
+
+      {/* 图例:16×16 图标 + 6px 间隙 + 文字 */}
+      {LEGEND.map((item, i) =>
+        item.sep ? (
+          <span key={`sep-${i}`} className="tl-sep" style={{ left: item.x, top: 21 }} />
+        ) : (
+          <span key={item.icon} className="tl-lg">
+            <img src={`${S01}/${item.icon}.svg`} alt="" style={{ left: item.x, top: 18.68 }} />
+            <span className="tl-t" style={{ left: item.x + 22, top: 16.68 }}>{item.label}</span>
+          </span>
+        )
+      )}
+
+      {/* 右侧时钟 + 近24h */}
+      <svg className="tl-clock-svg" width="14" height="14" viewBox="0 0 24 24" style={{ left: 1268, top: 19.68 }} aria-hidden="true">
+        <circle cx="12" cy="12" r="9" fill="none" stroke="#777" strokeWidth="1.8" />
+        <path d="M12 7.5V12l3 2" fill="none" stroke="#777" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+      <span className="tl-t" style={{ left: 1287, top: 16.68 }}>{timelineMeta.rangeLabel}</span>
+
+      {/* 时间刻度:20 格等分,中心 x = 48 + 65.4737·i,当前时间格由 tl-now 蓝标签代替 */}
+      {ticks.map((tick, i) =>
+        i === nowOffset ? null : (
+          <span
+            key={tick}
+            className="tl-t tl-tick"
+            style={{ left: tickCenter(i) - 28, top: 91.68 }}
+          >
+            {tick}
+          </span>
+        )
+      )}
+
+      {/* 当前时间白字(居中于 tl-now 蓝标签) */}
+      <span className="tl-t tl-now-text" style={{ left: tickCenter(nowOffset) - 28, top: 91.68 }}>
+        {timelineRange.now}
+      </span>
     </section>
   );
 }
   Object.assign(__export, { TimelineArea });
 })();
 
+/* ===== src/views/workload-browser/index.jsx ===== */
+(function () {
+  const { useEffect, useMemo, useRef, useState } = React;
+  const { useApp, INFER_SERVICES, TRAIN_JOBS } = __export;
+const S02 = "./assets/uploads/s02";
+
+const STATUS_COLOR = { interrupt: "#E02128", degrade: "#F4840C", stall: "#E02128", normal: "#09AA71" };
+const CARD_STYLE = {
+  interrupt: { border: "#FEE7E8", bg: "linear-gradient(180deg,#FEE7E8 0%,#FFF 35%)" },
+  degrade: { border: "rgba(252,206,146,.4)", bg: "linear-gradient(180deg,#FEF5E8 0%,#FFF 34%)" },
+  stall: { border: "#FEF5E8", bg: "linear-gradient(180deg,#FEF5E8 0%,#FFF 34%)" },
+  normal: { border: "#EDEDED", bg: "#FFFFFF" },
+};
+const TAG_STYLE = {
+  interrupt: { bg: "#FABDC1", color: "#E02128" },
+  degrade: { bg: "#FDE2BD", color: "#C76207" },
+  normal: { bg: "#E7FBF2", color: "#09AA71" },
+};
+
+// —— 单张卡片 ——
+function WlCard({ item, view, selected, onClick }) {
+  const st = CARD_STYLE[item.status] || CARD_STYLE.normal;
+  const tag = TAG_STYLE[item.status] || TAG_STYLE.normal;
+  const isQwen = item.icon === "qwen";
+  return (
+    <div
+      className={`wl-card${selected ? " wl-card-selected" : ""}`}
+      style={{ border: `0.8px solid ${st.border}`, background: st.bg }}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+    >
+      {/* 标题行 */}
+      <div className="wl-card-head">
+        <img
+          className="wl-card-icon"
+          src={isQwen ? `${S02}/icon-qwen.svg` : `${S02}/icon-cube.svg`}
+          alt=""
+          draggable={false}
+        />
+        <span className="wl-card-name">{item.name}</span>
+        <span className="wl-card-tag" style={{ background: tag.bg, color: tag.color }}>
+          {{ interrupt: "中断", degrade: "劣化", stall: "卡死", normal: "正常运行" }[item.status] || "正常运行"}
+        </span>
+        {item.status === "interrupt" ? (
+          <span className="wl-card-tag" style={{ background: "#FABDC1", color: "#E02128" }}>待人工处理</span>
+        ) : null}
+        <span className="wl-card-time">{item.time}</span>
+      </div>
+
+      {/* 主指标三列 */}
+      {view === "infer" ? (
+        <div className="wl-main-metrics">
+          <div className="wl-mm wl-mm-first">
+            <span className="wl-mm-label">近24h请求成功率</span>
+            <span className="wl-mm-value-xl">{item.successRate}<em className="wl-unit">%</em></span>
+          </div>
+          <div className="wl-mm wl-mm-mid">
+            <span className="wl-mm-label">近24h请求数 / 成功 / 失败</span>
+            <span className="wl-mm-value-md">
+              {item.requests.split(" / ")[0]} / {item.requests.split(" / ")[1]} /{" "}
+              <b className="wl-fail">{item.failed}</b>
+            </span>
+          </div>
+          <div className="wl-mm wl-mm-last">
+            <span className="wl-mm-label">NPU卡数</span>
+            <span className="wl-mm-value-md">{item.npuCards}</span>
+          </div>
+        </div>
+      ) : (
+        <div className="wl-main-metrics">
+          <div className="wl-mm wl-mm-first">
+            <span className="wl-mm-label">训练进度</span>
+            <span className="wl-mm-value-xl">{item.progress}<em className="wl-unit">%</em></span>
+          </div>
+          <div className="wl-mm wl-mm-mid">
+            <span className="wl-mm-label">当前步数 / 总步数</span>
+            <span className="wl-mm-value-md">{item.steps}</span>
+          </div>
+          <div className="wl-mm wl-mm-last">
+            <span className="wl-mm-label">NPU卡数</span>
+            <span className="wl-mm-value-md">{item.npuCards}</span>
+          </div>
+        </div>
+      )}
+
+      <div className="wl-divider" />
+
+      {/* 辅助指标四列 */}
+      {view === "infer" ? (
+        <div className="wl-sub-metrics">
+          <div><span className="wl-sm-label">TTFT</span><span className="wl-sm-value">{item.ttft}<em className="wl-unit-sm">ms</em></span></div>
+          <div><span className="wl-sm-label">TPOT</span><span className="wl-sm-value">{item.tpot}<em className="wl-unit-sm">ms</em></span></div>
+          <div><span className="wl-sm-label">生成Token数</span><span className="wl-sm-value">{item.tokens}<em className="wl-unit-sm">M</em></span></div>
+          <div><span className="wl-sm-label">待人工处理 / 守护总数</span><span className="wl-sm-value">{item.manual}</span></div>
+        </div>
+      ) : (
+        <div className="wl-sub-metrics">
+          <div><span className="wl-sm-label">MFU</span><span className="wl-sm-value">{item.mfu}<em className="wl-unit-sm">%</em></span></div>
+          <div><span className="wl-sm-label">迭代耗时</span><span className="wl-sm-value">{item.iterTime}<em className="wl-unit-sm">s</em></span></div>
+          <div><span className="wl-sm-label">Loss</span><span className="wl-sm-value">{item.loss}</span></div>
+          <div><span className="wl-sm-label">断点续训 / 守护总数</span><span className="wl-sm-value">{item.manual}</span></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// —— 主区业务视图(浏览导航 + 卡片列表;home 时整体隐藏) ——
+function WorkloadBrowser({ filterKey }) {
+  const { view, detail, openDetail } = useApp();
+  const [sortKey, setSortKey] = useState("status");
+  const [sortOpen, setSortOpen] = useState(false);
+
+  // ④ 视图或过滤变化时关闭排序下拉
+  useEffect(() => {
+    setSortOpen(false);
+  }, [view, filterKey]);
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [glassTarget, setGlassTarget] = useState(null);
+  const [glass, setGlass] = useState({ first: -1, last: -1, count: 0 });
+  const listRef = useRef(null);
+
+  const items = useMemo(() => {
+    const src = view === "train" ? TRAIN_JOBS : INFER_SERVICES;
+    let arr = [...src];
+    if (filterKey && filterKey !== "total") {
+      arr = arr.filter((it) => {
+        if (filterKey === "normal") return it.status === "normal";
+        if (filterKey === "degrade") return it.status === "degrade";
+        if (filterKey === "interrupt") return it.status === "interrupt";
+        if (filterKey === "stall") return it.status === "stall";
+        return true;
+      });
+    }
+    if (sortKey === "status") {
+      const order = { interrupt: 0, degrade: 1, stall: 2, normal: 3 };
+      arr.sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
+    } else if (sortKey === "name") {
+      arr.sort((a, b) => a.name.localeCompare(b.name, "zh"));
+    } else if (sortKey === "npu") {
+      arr.sort((a, b) => b.npuCards - a.npuCards);
+    }
+    return arr;
+  }, [view, filterKey, sortKey]);
+
+  // 滚动时更新玻璃框与短条明暗(节流 rAF)
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return undefined;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const els = Array.from(list.querySelectorAll(".wl-cell"));
+      const listTop = list.scrollTop;
+      const listBottom = listTop + list.clientHeight - 64; // 渐隐区不算可视
+      let first = -1, last = -1;
+      els.forEach((el, i) => {
+        const t = el.offsetTop, b = t + el.offsetHeight;
+        if (b > listTop + 8 && t < listBottom) { if (first < 0) first = i; last = i; }
+        // 短条明暗由 glass state 渲染驱动(见 wl-bars map)
+      });
+      if (els.length === 0) { setGlass({ first: -1, last: -1, count: 0 }); return; }
+      if (first >= 0 && last >= 0) setGlass({ first, last, count: els.length });
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    list.addEventListener("scroll", onScroll, { passive: true });
+    update();
+    return () => { list.removeEventListener("scroll", onScroll); if (raf) cancelAnimationFrame(raf); };
+  }, [items]);
+
+
+
+  const active = (view === "train" || view === "infer") && !detail;
+  const businessName = view === "train" ? "训练作业" : "推理服务";
+  const filterName =
+    filterKey === "interrupt" ? "中断" : filterKey === "degrade" ? "劣化" : filterKey === "stall" ? "卡死" : filterKey === "normal" ? "正常运行" : null;
+
+  const scrollBy = (dir) => {
+    if (listRef.current) listRef.current.scrollBy({ top: dir * 544, behavior: "smooth" });
+  };
+
+  if (!active) return null;
+
+  return (
+    <div className="wl-root">
+      {/* 浏览导航 */}
+      <div className="wl-nav">
+        <button
+          type="button"
+          className="wl-sort"
+          onClick={() => setSortOpen((v) => !v)}
+          title="排序"
+        >
+          <span>{{ status: "按状态排序", name: "按名称", npu: "按 NPU 卡数" }[sortKey]}</span>
+          <span className="wl-sort-caret" aria-hidden="true">⌄</span>
+        </button>
+        {sortOpen ? (
+          <div className="wl-sort-menu">
+            {[["status", "按状态排序（异常在前）"], ["name", "按名称"], ["npu", "按 NPU 卡数"]].map(([k, label]) => (
+              <button
+                key={k}
+                type="button"
+                className={`wl-sort-item${sortKey === k ? " wl-sort-item-on" : ""}`}
+                onClick={() => { setSortKey(k); setSortOpen(false); }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <span className="wl-nav-sep" />
+        <div className="wl-bars-wrap">
+        <div className="wl-bars">
+          {items.map((it, i) => (
+            <span
+              key={it.key}
+              data-bar={it.key}
+              className={`wl-bar${i >= glass.first && i <= glass.last ? " wl-bar-visible" : ""}`}
+              style={{ background: STATUS_COLOR[it.status] || STATUS_COLOR.normal }}
+              title={it.name}
+              onClick={() => {
+                // 只滚列表容器(相对 offset 累加),绝不动页面滚动
+                const list = listRef.current;
+                const el = list?.querySelector(`[data-key="${it.key}"]`);
+                if (list && el) {
+                  let top = 0;
+                  let node = el;
+                  while (node && node !== list) { top += node.offsetTop; node = node.offsetParent; }
+                  list.scrollTo({ top: Math.max(0, top - list.clientHeight / 2 + 124), behavior: "smooth" });
+                  setSelectedCard(it.key);
+                  setGlassTarget({ top: Math.max(0, top - list.clientHeight / 2 + 124), key: it.key });
+                }
+              }}
+            />
+          ))}
+        </div>
+        {glass.count > 0 ? (
+          <span
+            className="wl-glass"
+            style={{
+              left: `calc(3px + (100% - 6px) * ${glass.first / glass.count})`,
+              width: `calc((100% - 6px) * ${(glass.last - glass.first + 1) / glass.count})`,
+            }}
+            aria-hidden="true"
+          />
+        ) : null}
+        </div>
+
+        <div className="wl-page-btns">
+          <button type="button" className="wl-page-btn" title="上一组" onClick={() => scrollBy(-1)}>‹</button>
+          <button type="button" className="wl-page-btn" title="下一组" onClick={() => scrollBy(1)}>›</button>
+        </div>
+      </div>
+
+      {/* 卡片列表 */}
+      <div className="wl-list-mask">
+        <div className="wl-list" ref={listRef}>
+          {items.length === 0 ? (
+            <div className="wl-empty">
+              <img src={`${S02}/icon-cube.svg`} alt="" className="wl-empty-icon" draggable={false} />
+              <span>暂无{filterName || "该状态"}的{businessName}</span>
+            </div>
+          ) : (
+            <div className="wl-grid">
+              {items.map((it) => (
+                <div data-key={it.key} key={it.key} className="wl-cell">
+                  <WlCard
+                    item={it}
+                    view={view}
+                    selected={selectedCard === it.key}
+                    onClick={() => {
+                      setSelectedCard(selectedCard === it.key ? null : it.key);
+                      if (it.key === "svc-qwen15") openDetail("qwen");
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+  Object.assign(__export, { WorkloadBrowser });
+})();
+
+/* ===== src/mock/detail-steps.js ===== */
+(function () {
+// Layer 2: S03 诊断详情页 mock — 光链路 / Qwen 两套处理步骤与图表文字
+// step.status: "done"(已完成) | "manual"(待人工处理,当前) | "none"(无可用方案)
+
+const OPTICAL_STEPS = [
+  {
+    key: "sense", name: "事件感知", status: "done",
+    record: { time: "12:00:00", title: "感知光链路闪断告警" },
+    body: "计算柜11-L1交换板02 光链路出现闪断，自动触发诊断",
+  },
+  {
+    key: "analyze", name: "故障分析", status: "done",
+    record: { time: "12:00:28", title: "光链路通道功率与错误计数分析" },
+    body: "通道4收光功率低于阈值 −3.2 dBm，错误计数持续上升，判定光模块端面脏污",
+  },
+  {
+    key: "decide", name: "方案决策", status: "done",
+    record: { time: "12:00:40", title: "已完成L1-L2异常链路优雅隔离，并生成待办事件需人工处理" },
+  },
+  {
+    key: "recover", name: "故障恢复", status: "manual",
+    // 展开内容:opt-recover-body 图 + 两张图表(DOM 文字)
+    recover: true,
+  },
+];
+
+const QWEN_STEPS = [
+  { key: "q-sense", name: "事件感知", status: "done", body: "12:05:12 感知 Qwen-1.5B 请求成功率下降至 77.5%" },
+  { key: "q-diag", name: "业务故障诊断", status: "done", body: "12:05:22 定位 D-08 实例异常退出，影响 Qwen-1.5B 服务" },
+  { key: "q-plan", name: "业务恢复方案决策", status: "none", body: "12:05:30 实例重启无法恢复，需先修复资源故障" },
+  { key: "q-rdiag", name: "资源故障诊断", status: "done", body: "12:05:36 112.34.23.1 · CPU02 hinic3 网卡驱动版本 V11.8 过低" },
+  { key: "q-rplan", name: "资源恢复方案决策", status: "done", body: "12:05:40 生成网卡驱动升级方案 V11.8 → V13.1，需人工授权" },
+  { key: "q-recover", name: "故障恢复", status: "manual", qwenRecover: true },
+];
+
+// 光功率图表文字(相对 chart-power.svg 左上)
+const POWER_CHART = {
+  title: "光功率（dBm）",
+  yTicks: [
+    { text: "0", x: 18, y: 21 },
+    { text: "-5", x: 13, y: 59.67 },
+    { text: "-10", x: 7, y: 98.33 },
+    { text: "-15", x: 7, y: 137 },
+  ],
+  threshold: { text: "低功率阈值 −3.2", x: 325, y: 35.75, color: "#E02128" },
+  xTicks: [
+    { text: "12:00:40", x: 20 }, { text: "12:05:40", x: 69.71 }, { text: "12:10:40", x: 119.43 },
+    { text: "12:15:40", x: 169.14 }, { text: "12:20:40", x: 218.86 }, { text: "12:25:40", x: 268.57 },
+    { text: "12:30:40", x: 318.29 }, { text: "12:35:40", x: 368 },
+  ],
+  xTickY: 153,
+  legend: {
+    y: 179, textY: 184,
+    items: [
+      { label: "通道1", x: 52, dotX: 40, color: "#2F7BFF" },
+      { label: "通道2", x: 144, dotX: 132, color: "#34C38F" },
+      { label: "通道3", x: 236, dotX: 224, color: "#8B6FF2" },
+      { label: "通道4", x: 328, dotX: 316, color: "#E02128" },
+    ],
+  },
+};
+
+// 错误次数图表文字(相对 chart-errors.svg 左上)
+const ERRORS_CHART = {
+  title: "错误次数（次）",
+  yTicks: [
+    { text: "120", x: 6, y: 23 },
+    { text: "80", x: 12, y: 53.67 },
+    { text: "40", x: 12, y: 84.33 },
+    { text: "0", x: 18, y: 115 },
+  ],
+  xTicks: POWER_CHART.xTicks,
+  xTickY: 132,
+};
+
+// 监控记录抽屉(光链路,6 条 mock)
+const MONITOR_RECORDS = [
+  { time: "12:00:40", text: "通道4 收光功率 −3.2 dBm,低于阈值" },
+  { time: "12:01:10", text: "通道4 错误计数 42 → 68,持续上升" },
+  { time: "12:02:00", text: "L1-L2 异常链路已优雅隔离,流量切换至备份通道" },
+  { time: "12:05:00", text: "通道1/2/3 光功率稳定,均值 −1.1 dBm" },
+  { time: "12:10:00", text: "通道4 持续离线,待人工清污" },
+  { time: "12:15:00", text: "巡检建议:清洁 光模块-4 端面后复测" },
+];
+
+// 详情页头信息
+const DETAIL_META = {
+  optical: { assetKey: "opt", name: "光链路脏污,待清污" },
+  qwen: { assetKey: "qw", name: "Qwen-1.5B 在线服务劣化" },
+};
+  Object.assign(__export, { OPTICAL_STEPS, QWEN_STEPS, POWER_CHART, ERRORS_CHART, MONITOR_RECORDS, DETAIL_META });
+})();
+
+/* ===== src/views/detail-panel/step-list/index.jsx ===== */
+(function () {
+  const { useEffect, useRef, useState } = React;
+  const { useApp, Icon } = __export;
+const S03 = "./assets/uploads/s03";
+
+const STATUS_TAG = {
+  done: { text: "已完成", bg: "#E7FBF2", color: "#09AA71" },
+  manual: { text: "待人工处理", bg: "#FEE7E8", color: "#E02128" },
+  none: { text: "无可用方案", bg: "#FEE7E8", color: "#E02128" },
+};
+
+// 单个步骤(手风琴行)
+function Step({
+  step, open, onToggle, children, chartData, last, dataStep, onResolved,
+}) {
+  const tag = STATUS_TAG[step.status];
+  // 图标仅 manual 用圆环,其余(done/none)一律绿勾
+  return (
+    <div className="st-step" data-step={dataStep}>
+      <button type="button" className={`st-head${open ? " st-head-open" : ""}`} onClick={onToggle}>
+        <span className={`st-icon${step.status === "manual" ? " st-icon-spin" : ""}`}>
+          <img src={`${S03}/${step.status === "manual" ? "ic-step-monitor" : "ic-step-done"}.svg`} alt="" draggable={false} />
+        </span>
+        <span className="st-name">{step.name}</span>
+        <span className="st-tag" style={{ background: tag.bg, color: tag.color }}>{tag.text}</span>
+        <img className="st-caret" src={`${S03}/${open ? "ic-chevron-up" : "ic-chevron-down"}.svg`} alt="" draggable={false} />
+      </button>
+      {!last ? <span className="st-line" aria-hidden="true" /> : null}
+      <div className={`st-body${open ? " st-body-open" : ""}`}>
+        <div className="st-body-inner">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 处理过程手风琴(默认最后一个当前步骤展开)
+function StepList({ steps, chartData, jumpKey, listRef, onResolved }) {
+  const [openKeys, setOpenKeys] = useState(() => {
+    const cur = steps.filter((s) => s.status === "manual").map((s) => s.key);
+    return new Set(cur.length ? cur : [steps[steps.length - 1].key]);
+  });
+  const rootRef = listRef || useRef(null);
+
+  // 右侧处理环节节点 → 展开并滚动到该步骤
+  useEffect(() => {
+    if (!jumpKey) return;
+    setOpenKeys((prev) => new Set(prev).add(jumpKey));
+    const el = rootRef.current?.querySelector(`[data-step="${jumpKey}"]`);
+    if (el && rootRef.current) {
+      let top = 0, node = el;
+      while (node && node !== rootRef.current) { top += node.offsetTop; node = node.offsetParent; }
+      rootRef.current.scrollTo({ top, behavior: "smooth" });
+    }
+  }, [jumpKey]);
+  const allOpen = openKeys.size >= steps.length;
+
+  const toggle = (key) => {
+    setOpenKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+  const toggleAll = () => {
+    setOpenKeys(allOpen ? new Set() : new Set(steps.map((s) => s.key)));
+  };
+
+  const lastKey = steps[steps.length - 1].key;
+
+  return (
+    <div className="st-list" ref={rootRef}>
+      <div className="st-title-row">
+        <span className="st-title">处理过程</span>
+        <button type="button" className="st-expand-all" onClick={toggleAll}>
+          <img src={`${S03}/ic-expand-all.svg`} alt="" draggable={false} />
+          {allOpen ? "收起全部" : "展开全部"}
+        </button>
+      </div>
+
+      {steps.map((step, idx) => (
+        <Step
+          key={step.key}
+          dataStep={step.key}
+          onResolved={onResolved}
+          step={step}
+          last={idx === steps.length - 1}
+          open={openKeys.has(step.key)}
+          onToggle={() => toggle(step.key)}
+          chartData={chartData}
+        >
+          {step.record ? (
+            <p className="st-record">
+              <span className="st-record-time">{step.record.time}</span>
+              <span className="st-record-title">{step.record.title}</span>
+            </p>
+          ) : null}
+          {step.body ? <p className="st-text">{step.body}</p> : null}
+
+          {step.recover ? (
+            <div className="st-opt-recover">
+              {/* 恢复主体图(自带 28 缩进) */}
+              <img
+                className="st-recover-img"
+                src={`${S03}/opt-recover-body@2x.png`}
+                alt=""
+                draggable={false}
+              />
+              <ChartBlock chart={chartData.POWER_CHART} svg="chart-power" height={208} />
+              <ChartBlock chart={chartData.ERRORS_CHART} svg="chart-errors" height={160} />
+            </div>
+          ) : null}
+
+          {step.qwenRecover ? <QwenRecover onResolved={onResolved} /> : null}
+        </Step>
+      ))}
+    </div>
+  );
+}
+
+// 图表块(svg + DOM 绝对文字)
+function ChartBlock({ chart, svg, height }) {
+  const [hover, setHover] = useState(null);
+  return (
+    <div
+      className="st-chart"
+      style={{ height }}
+      onMouseMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        setHover(((e.clientX - r.left) / r.width) * 424);
+      }}
+      onMouseLeave={() => setHover(null)}
+    >
+      <img src={`${S03}/${svg}.svg`} alt="" draggable={false} />
+      <span className="st-chart-title">{chart.title}</span>
+      {chart.yTicks.map((t) => (
+        <span key={t.text} className="st-chart-tick" style={{ left: t.x, top: t.y }}>{t.text}</span>
+      ))}
+      {chart.threshold ? (
+        <span className="st-chart-tick st-chart-threshold" style={{ left: chart.threshold.x, top: chart.threshold.y }}>
+          {chart.threshold.text}
+        </span>
+      ) : null}
+      {chart.xTicks.map((t) => (
+        <span key={t.text} className="st-chart-tick st-chart-x" style={{ left: t.x, top: chart.xTickY }}>{t.text}</span>
+      ))}
+      {chart.legend ? chart.legend.items.map((it) => (
+        <span key={it.label} className="st-chart-legend" style={{ left: it.x, top: chart.legend.textY }}>
+          <i style={{ background: it.color, left: it.dotX - it.x, top: chart.legend.y - chart.legend.textY }} />
+          {it.label}
+        </span>
+      )) : null}
+      {hover !== null ? (
+        <>
+          <span className="st-chart-cursor" style={{ left: hover }} />
+          <span className="st-chart-tip" style={{ left: Math.min(hover + 8, 300) }}>
+            12:0{Math.floor(hover / 53)}:40 · 通道1 −1.2 · 通道2 −1.0 · 通道3 −0.9 · 通道4 −3.2 dBm
+          </span>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+// §6 授权升级完整流程组件(确认弹窗 → 升级中 → 完成态)
+function QwenRecover({ onResolved }) {
+  const { resolved } = useApp();
+  const [phase, setPhase] = useState("idle"); // idle | confirm | upgrading | done
+  const [progress, setProgress] = useState(0);
+  const [extraRecords, setExtraRecords] = useState([]);
+  const timers = useRef([]);
+
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+
+  const startUpgrade = () => {
+    setPhase("upgrading");
+    setProgress(0);
+    const t0 = performance.now();
+    const tick = () => {
+      const p = Math.min(1, (performance.now() - t0) / 3000);
+      setProgress(p);
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    const REC = [
+      "12:06:20 开始升级 hinic3 驱动",
+      "12:06:48 驱动升级完成，版本 V13.1",
+      "12:06:52 D-08 实例已恢复，Qwen-1.5B 请求成功率 99.95%",
+    ];
+    timers.current = [
+      setTimeout(() => setExtraRecords((r) => [...r, REC[0]]), 1000),
+      setTimeout(() => setExtraRecords((r) => [...r, REC[1]]), 2000),
+      setTimeout(() => {
+        setExtraRecords((r) => [...r, REC[2]]);
+        setPhase("done");
+        if (onResolved) onResolved();
+        window.dispatchEvent(new CustomEvent("s03:toast", { detail: { text: "网卡驱动升级完成，业务已恢复" } }));
+      }, 3000),
+    ];
+  };
+
+  const done = phase === "done" || resolved;
+
+  return (
+    <div className="st-qwen-recover">
+      <p className="st-record">
+        <img className="st-record-dot" src={`${S03}/ic-record-dot.svg`} alt="" draggable={false} />
+        <span className="st-text-inline">
+          12:06:06 待人工确认执行网卡升级，升级后核查驱动版本、D-08 实例和 Qwen-1.5B 服务
+        </span>
+      </p>
+      {extraRecords.map((r) => (
+        <p key={r} className="st-record">
+          <img className="st-record-dot" src={`${S03}/ic-record-dot.svg`} alt="" draggable={false} />
+          <span className="st-text-inline">{r}</span>
+        </p>
+      ))}
+      <div className={`st-version-card${phase === "upgrading" ? " st-version-upgrading" : ""}`}>
+        <div className="st-vc-head">
+          <span className="st-vc-name">hinic3 网卡驱动</span>
+          <span className="st-vc-host">112.34.23.1 · CPU02</span>
+        </div>
+        <div className="st-vc-body">
+          <div className="st-vc-cell">
+            <span className="st-vc-label">{done ? "已升级版本" : "当前版本"}</span>
+            <span className="st-vc-ver">{done ? "V13.1" : "V11.8"}</span>
+          </div>
+          <span className="st-vc-swap" aria-hidden="true">
+            <img src={`${S03}/ic-version-ring.svg`} alt="" className="st-vc-ring" draggable={false} />
+            <img src={`${S03}/ic-version-swap.svg`} alt="" className="st-vc-arrow" draggable={false} />
+          </span>
+          <div className="st-vc-cell st-vc-target">
+            <span className="st-vc-label">{done ? "当前版本" : "待升级版本"}</span>
+            <span className="st-vc-ver st-vc-ver-grad">V13.1</span>
+          </div>
+        </div>
+        {phase === "upgrading" ? <div className="st-progress"><span style={{ width: `${progress * 100}%` }} /></div> : null}
+        <div className="st-vc-foot">
+          {done ? (
+            <button type="button" className="st-auth-btn st-auth-done" disabled>已升级</button>
+          ) : phase === "upgrading" ? (
+            <button type="button" className="st-auth-btn st-auth-busy" disabled>
+              <span className="st-spinner" aria-hidden="true" />升级中…
+            </button>
+          ) : (
+            <button type="button" className="st-auth-btn" onClick={() => setPhase("confirm")}>授权升级网卡</button>
+          )}
+        </div>
+      </div>
+
+      {phase === "confirm" ? (
+        <div className="st-confirm-mask" onClick={() => setPhase("idle")}>
+          <div className="st-confirm" onClick={(e) => e.stopPropagation()}>
+            <span className="st-confirm-title">确认授权升级</span>
+            <p className="st-confirm-body">
+              将在 112.34.23.1 · CPU02 上把 hinic3 网卡驱动从 V11.8 升级至 V13.1，期间 D-08 实例将短暂不可用（约 30 秒）。
+            </p>
+            <div className="st-confirm-btns">
+              <button type="button" className="st-confirm-cancel" onClick={() => setPhase("idle")}>取消</button>
+              <button type="button" className="st-confirm-ok" onClick={startUpgrade}>确认升级</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+  Object.assign(__export, { StepList });
+})();
+
+/* ===== src/views/detail-right/index.jsx ===== */
+(function () {
+  const { useState } = React;
+  const { Icon, useApp, QWEN_STEPS } = __export;
+const S03 = "./assets/uploads/s03";
+
+// 热区数据:optical(Qwen 同款结构由 QWEN_HOTZONES)
+const OPT_HOTZONES = [
+  { key: "lpo01", x: 815, y: 434, w: 38, h: 54, tip: ["L1-L2异常链路自动优雅隔离，待清污", "异常链路已完成优雅隔离，事件已关闭。"], alert: true },
+  ...[1, 2, 3, 4].map((i) => ({ key: `lingqu-${i}`, x: 814 + 260 * (i - 1), y: 212, w: 250, h: 72, tip: [`灵衢 L2-0${i} · 互联芯片 2 · 正常`] })),
+  ...[1, 2, 3, 4, 5, 6, 7, 8].map((i) => ({ key: `npu-${i}`, x: 814 + 130 * (i - 1), y: 755, w: 120, h: 64, tip: [`NPU计算刀片0${i} · NPU 8 卡 · 正常`] })),
+];
+
+const QWEN_HOTZONES = [
+  { key: "P-01", x: 628, y: 383, w: 95, h: 102, tip: ["P-01 实例 · 10.0.12.11 · 正常"] },
+  { key: "P-02", x: 628, y: 580, w: 95, h: 102, tip: ["P-02 实例 · 10.0.12.12 · 正常"] },
+  ...[1, 2, 3, 4].flatMap((i) => [
+    { key: `D-0${i}`, x: 863 + 206 * (i - 1), y: 383, w: 95, h: 102, tip: [`D-0${i} 实例 · 正常`] },
+    { key: `D-0${i + 4}`, x: 863 + 206 * (i - 1), y: 580, w: 95, h: 102, tip: [`D-0${i + 4} 实例 · 正常`], isD08: i === 4 },
+  ]),
+  { key: "cab-c", x: 1690, y: 470, w: 160, h: 110, tip: ["计算柜13 · CPU02 · hinic3 网卡"] },
+];
+
+// 处理环节节点(两页共用式):optical 4 步 / qwen 6 步
+const OPT_NODES = [
+  { x: 600, w: 160, key: "sense" }, { x: 950, w: 180, key: "analyze" },
+  { x: 1328, w: 210, key: "decide" }, { x: 1740, w: 130, key: "recover" },
+];
+
+const QWEN_NODE_X = { "q-sense": 600, "q-diag": 792, "q-plan": 984, "q-rdiag": 1176, "q-rplan": 1368, "q-recover": 1560, end: 1840 };
+
+function DetailRight({ onExpandToggle, expanded }) {
+  const { detail, resolved } = useApp();
+  const [hoverZone, setHoverZone] = useState(null);
+  const [showBigTip, setShowBigTip] = useState(true); // 默认显示
+  const [tab, setTab] = useState("journey"); // journey | process
+  const [flash, setFlash] = useState(null);
+
+  if (!detail) return null;
+  const isOptical = detail === "optical";
+  const zones = isOptical ? OPT_HOTZONES : QWEN_HOTZONES;
+  const steps = QWEN_STEPS; // qwen;optical 的步骤在 detail-panel 左侧,联动经 props?此处用全局 mock
+
+  const jumpToStep = (key) => {
+    setFlash(key);
+    setTimeout(() => setFlash(null), 600);
+    window.dispatchEvent(new CustomEvent("s03:jump-step", { detail: { key } }));
+  };
+
+  return (
+    <section className={`dt-right${expanded ? " dt-right-expanded" : ""}`}>
+      {/* —— 光链路右侧 —— */}
+      {isOptical ? (
+        <>
+          <img className="dr-opt-topo" src={`${S03}/opt-topo@2x.png`} alt="" draggable={false} />
+          {/* 状态提示框(默认显示,LPO01 点击切换) */}
+          {showBigTip ? (
+            <div className="dr-tip dr-tip-opt">
+              <span className="dr-tip-arrow" aria-hidden="true" />
+              <div className="dr-tip-head">
+                <Icon name="triangle-alert" size="1.5rem" color="#E02128" strokeWidth={2} />
+                <span className="dr-tip-title">L1-L2异常链路自动优雅隔离，待清污</span>
+              </div>
+              <p className="dr-tip-body">异常链路已完成优雅隔离，事件已关闭。</p>
+            </div>
+          ) : null}
+          {/* 热区 */}
+          {zones.map((z) => (
+            <button
+              key={z.key}
+              type="button"
+              className="dr-zone"
+              style={{ left: z.x, top: z.y, width: z.w, height: z.h }}
+              onMouseEnter={() => setHoverZone(z)}
+              onMouseLeave={() => setHoverZone(null)}
+              onClick={() => { if (z.alert) setShowBigTip((v) => !v); }}
+              title={z.tip[0]}
+            />
+          ))}
+          {/* 处理环节卡 + 节点热区 */}
+          <img className="dr-opt-process" src={`${S03}/opt-process@2x.png`} alt="" draggable={false} />
+          {OPT_NODES.map((n) => (
+            <button
+              key={n.key}
+              type="button"
+              className={`dr-node${flash === n.key ? " dr-node-flash" : ""}`}
+              style={{ left: n.x, top: 905, width: n.w, height: 100 }}
+              title="定位到对应步骤"
+              onClick={() => jumpToStep(n.key)}
+            />
+          ))}
+        </>
+      ) : (
+        /* —— Qwen 右侧 —— */
+        <>
+          <div className="dr-qw-card">
+            <img className="dr-qw-metrics" src={`${S03}/qw-metrics@2x.png`} alt="" draggable={false} />
+            <img className="dr-qw-topo" src={`${S03}/qw-topo@2x.png`} alt="" draggable={false} />
+            <img className="dr-qw-cabinet" src={`${S03}/qw-cabinet@2x.png`} alt="" draggable={false} />
+            {/* 大提示框(默认显示,指 D-08;点 D-08 切换) */}
+            {showBigTip && !resolved ? (
+              <div className="dr-tip dr-tip-qw">
+                <span className="dr-tip-arrow-down" aria-hidden="true" />
+                <div className="dr-tip-head">
+                  <Icon name="triangle-alert" size="1.5rem" color="#E02128" strokeWidth={2} />
+                  <span className="dr-tip-title">待升级网卡驱动版本</span>
+                  <span className="dr-tip-tag">待人工处理</span>
+                </div>
+                <p className="dr-tip-body">原故障节点 112.34.23.1 · CPU02 · hinic3</p>
+                <p className="dr-tip-body">当前版本为 V11.8，版本过低，需升级至 V13.1。</p>
+              </div>
+            ) : null}
+            {/* D-08 恢复后叠绿色正常六边形 */}
+            {resolved ? (
+              <img className="dr-hex-normal" src={`${S03}/hex-normal@2x.png`} alt="" draggable={false} />
+            ) : null}
+            {/* 实例热区 */}
+            {zones.map((z) => (
+              <button
+                key={z.key}
+                type="button"
+                className="dr-zone"
+                style={{ left: z.x, top: z.y, width: z.w, height: z.h }}
+                onMouseEnter={() => setHoverZone(z)}
+                onMouseLeave={() => setHoverZone(null)}
+                onClick={() => { if (z.isD08) setShowBigTip((v) => !v); }}
+                title={z.tip[0]}
+              />
+            ))}
+          </div>
+
+          {/* 底部卡:服务旅程/处理环节 页签 */}
+          <div className="dr-qw-bottom">
+            <div className="dr-tabs">
+              <button type="button" className={`dr-tab${tab === "journey" ? " dr-tab-on" : ""}`} onClick={() => setTab("journey")}>服务旅程</button>
+              <button type="button" className={`dr-tab${tab === "process" ? " dr-tab-on" : ""}`} onClick={() => setTab("process")}>处理环节</button>
+            </div>
+            {tab === "journey" ? (
+              <>
+                <img className="dr-qw-journey" src={`${S03}/qw-journey@2x.png`} alt="" draggable={false} />
+                {/* 处置时间点 hover */}
+                {[
+                  { x: 834, tip: "12:05:12 服务劣化开始" },
+                  { x: 1049, tip: "12:05:22 定位 D-08 实例退出" },
+                  { x: 1222, tip: "12:05:30 尝试实例重启失败" },
+                  { x: 1437, tip: "12:05:40 生成网卡升级方案" },
+                ].map((m) => (
+                  <span key={m.x} className="dr-journey-dot" style={{ left: m.x }} title={m.tip} />
+                ))}
+              </>
+            ) : (
+              <div className="dr-process-strip">
+                <span className="dr-ps-line" aria-hidden="true" />
+                {steps.map((st, i) => (
+                  <div
+                    key={st.key}
+                    className={`dr-ps-node${st.status === "manual" ? " dr-ps-node-cur" : ""}`}
+                    style={{ left: 600 + i * 208 }}
+                    onClick={() => jumpToStep(st.key)}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <span className="dr-ps-dot">
+                      {st.status !== "manual" ? (
+                        <img src={`${S03}/ic-step-done.svg`} alt="" draggable={false} />
+                      ) : (
+                        <img className="dr-ps-hand" src={`${S03}/ic-step-monitor.svg`} alt="" draggable={false} />
+                      )}
+                    </span>
+                    <span className="dr-ps-name">{st.name}</span>
+                    <span className="dr-ps-desc">{st.body || st.record?.title || ""}</span>
+                    <span className="dr-ps-time">{(st.body || "").slice(0, 8)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* hover 小提示(跟随热区) */}
+      {hoverZone ? (
+        <span className="dr-hover-tip" style={{ left: hoverZone.x + hoverZone.w / 2, top: hoverZone.y - 34 }}>
+          {hoverZone.tip[0]}
+        </span>
+      ) : null}
+    </section>
+  );
+}
+  Object.assign(__export, { DetailRight });
+})();
+
+/* ===== src/views/detail-panel/index.jsx ===== */
+(function () {
+  const { useEffect, useRef, useState } = React;
+  const { useApp, OPTICAL_STEPS, QWEN_STEPS, POWER_CHART, ERRORS_CHART } = __export;
+  const StepList = __export.StepList;
+  const DetailRight = __export.DetailRight;
+const S03 = "./assets/uploads/s03";
+
+// S03 诊断详情页:左侧事件面板(页头图 + 摘要图 + 处理过程手风琴 + 底部输入框)
+// 右侧诊断区第 1 批仅工具条 + 占位
+function DetailPanel() {
+  const { detail, closeDetail, resolved, markResolved } = useApp();
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
+
+  useEffect(() => {
+    const onToast = (e) => {
+      setToast(e.detail ? e.detail.text : "");
+      clearTimeout(toastTimer.current);
+      toastTimer.current = setTimeout(() => setToast(null), 2200);
+    };
+    window.addEventListener("s03:toast", onToast);
+    return () => { window.removeEventListener("s03:toast", onToast); clearTimeout(toastTimer.current); };
+  }, []);
+  const [expandedPanel, setExpandedPanel] = useState(false);
+  const [jumpKey, setJumpKey] = useState(null);
+  const scrollRef = useRef(null); // 右侧处理环节节点 → 左侧步骤
+
+  useEffect(() => {
+    const onJump = (e) => setJumpKey(e.detail ? e.detail.key : null);
+    window.addEventListener("s03:jump-step", onJump);
+    return () => window.removeEventListener("s03:jump-step", onJump);
+  }, []);
+
+  if (!detail) return null;
+
+  const isOptical = detail === "optical";
+  // qwen 已恢复:故障恢复步骤 → 已完成
+  const steps = isOptical
+    ? OPTICAL_STEPS
+    : resolved
+      ? QWEN_STEPS.map((st) => (st.key === "q-recover" ? { ...st, status: "done" } : st))
+      : QWEN_STEPS;
+  const assetKey = isOptical ? "opt" : "qw";
+
+  return (
+    <>
+      {/* 左侧面板(x48–532):替换算小维(由 app 层互斥渲染) */}
+      <aside className={`dt-panel${expandedPanel ? " dt-panel-hidden" : ""}`}>
+        {/* 页头图(含返回箭头/标题/标签/时间/···) */}
+        <img
+          className="dt-header"
+          src={`${S03}/${assetKey}-header@2x.png`}
+          alt=""
+          draggable={false}
+        />
+        {/* 返回热区 */}
+        <button
+          type="button"
+          className="dt-back-hot"
+          title="返回"
+          onClick={closeDetail}
+        />
+        {/* 已恢复标签(授权升级完成,覆盖页头待人工处理) */}
+        {resolved && !isOptical ? <span className="dt-restored-tag">已恢复</span> : null}
+        {/* 更多热区(菜单第2批) */}
+        <button type="button" className="dt-more-hot" title="更多" />
+
+        <span className="dt-head-divider" aria-hidden="true" />
+
+        {/* 滚动区:摘要卡 + 处理过程 */}
+        <div className="dt-scroll" ref={scrollRef}>
+          <img
+            className="dt-summary"
+            src={`${S03}/${assetKey}-summary@2x.png`}
+            alt=""
+            draggable={false}
+          />
+          <StepList steps={steps} chartData={{ POWER_CHART, ERRORS_CHART }} jumpKey={jumpKey} listRef={scrollRef} onResolved={markResolved} />
+        </div>
+
+        {/* 底部固定输入区(复用首页输入框样式) */}
+        <div className="dt-input-zone">
+          <img className="dt-input-bg" src="./assets/uploads/s01/input-box@2x.png" alt="" draggable={false} />
+          <input className="dt-input" placeholder="输入问题或输入“/”触发提示词" aria-label="输入问题" />
+        </div>
+      </aside>
+
+      {/* 右侧诊断区内容(§4/§5) */}
+      <DetailRight expanded={expandedPanel} onExpandToggle={() => setExpandedPanel((v) => !v)} />
+
+      {/* 工具条(覆盖在最上) */}
+      <section className={`dt-right dt-right-toolbar-only${expandedPanel ? " dt-right-expanded" : ""}`}>
+        <div className="dt-toolbar">
+          <span className="dt-toolbar-title">诊断详情</span>
+          <button
+            type="button"
+            className="dt-toolbar-zoom"
+            title={expandedPanel ? "收起" : "放大"}
+            onClick={() => setExpandedPanel((v) => !v)}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#777" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+              {expandedPanel ? (
+                <>
+                  <path d="M9 3H3v6" /><path d="M15 21h6v-6" />
+                  <path d="M3 3l7 7" /><path d="M21 21l-7-7" />
+                </>
+              ) : (
+                <>
+                  <path d="M3 9V3h6" /><path d="M21 15v6h-6" />
+                  <path d="M3 9l7-7" /><path d="M21 15l-7 7" />
+                </>
+              )}
+            </svg>
+          </button>
+        </div>
+      </section>
+      {toast ? <span className="dt-toast">{toast}</span> : null}
+    </>
+  );
+}
+  Object.assign(__export, { DetailPanel });
+})();
+
 /* ===== app.jsx ===== */
 (function () {
+  const { useEffect, useRef, useState } = React;
   const { ConfigProvider, Empty } = antd;
-  const { AppProvider } = __export;
+  const { AppProvider, useApp } = __export;
   const zhCN = __export.zhCN;
   const TopNav = __export.TopNav;
   const SideNav = __export.SideNav;
@@ -4673,6 +10219,8 @@ function TimelineArea() {
   const MetricsArea = __export.MetricsArea;
   const CabinetArea = __export.CabinetArea;
   const TimelineArea = __export.TimelineArea;
+  const WorkloadBrowser = __export.WorkloadBrowser;
+  const DetailPanel = __export.DetailPanel;
 // App entry — ICT React page
 // Layering convention (one folder per component, kebab-case + index.jsx/index.css):
 //   Layer 1 global state  → src/context.jsx        (AppProvider: global state + dark mode toggle)
@@ -4698,7 +10246,66 @@ function TimelineArea() {
 
 
 
+
+
+
+// 大屏等比缩放:设计画布固定 1920×1080,按视口整体 scale 并居中,
+// 任何窗口尺寸下布局比例与 1920×1080 完全一致;留白用页面灰填充。
+// transform: scale 不改变布局尺寸,iframe(3D)内部 viewport 不受影响。
+const DESIGN_W = 1920;
+const DESIGN_H = 1080;
+
+// 内层页面(可使用 useApp;3D 区按视图切换隐藏态)
+function Page({ metricFilter, rootRef }) {
+  const { view, detail } = useApp();
+
+  // ④ 切换视图时重置过滤为「总数」
+  useEffect(() => {
+    metricFilter[1]("total");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
+  return (
+    <div className="app-shell">
+      <div className="app-root" ref={rootRef}>
+        <TopNav />
+        <div className="app-body">
+          <SideNav />
+          {detail ? <DetailPanel /> : <AiPanel />}
+          <div className="app-main">
+            <MetricsArea onFilterChange={metricFilter[1]} />
+            {/* 指标卡已 absolute 到画布 (554,72),此处占位保持 flex 流高度 */}
+            <div className="metrics-ph" aria-hidden="true" />
+            {/* 3D 机柜区:业务视图下淡出下移(iframe 保留 DOM 不卸载,回 home 不重载) */}
+            <div className={`cabinet-fade${view === "home" && !detail ? "" : " cabinet-fade-hidden"}`}>
+              <CabinetArea />
+            </div>
+            <TimelineArea />
+            {/* 时间轴已 absolute 到画布 (556,929),此处占位保持 flex 流高度 */}
+            <div className="timeline-ph" aria-hidden="true" />
+            <WorkloadBrowser filterKey={metricFilter[0]} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
+  const rootRef = useRef(null);
+  const [metricFilter, setMetricFilter] = useState("total");
+
+  useEffect(() => {
+    const fit = () => {
+      const el = rootRef.current;
+      if (!el) return;
+      const scale = Math.min(window.innerWidth / DESIGN_W, window.innerHeight / DESIGN_H);
+      el.style.transform = `scale(${scale})`;
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, []);
+
   return (
     <AppProvider>
       <ConfigProvider
@@ -4708,18 +10315,7 @@ function App() {
         empty={{ image: "./assets/uploads/empty.svg" }}
         spin={{ indicator: <img src="./assets/uploads/loading.svg" alt="" className="custom-spin-indicator" /> }}
       >
-        <div className="app-root">
-          <TopNav />
-          <div className="app-body">
-            <SideNav />
-            <AiPanel />
-            <div className="app-main">
-              <MetricsArea />
-              <CabinetArea />
-              <TimelineArea />
-            </div>
-          </div>
-        </div>
+        <Page metricFilter={[metricFilter, setMetricFilter]} rootRef={rootRef} />
       </ConfigProvider>
     </AppProvider>
   );

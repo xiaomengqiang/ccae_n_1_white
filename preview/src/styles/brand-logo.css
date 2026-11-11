@@ -1,0 +1,9 @@
+/* 侧栏 logo:橙→粉→紫 conic 渐变小球(24px,无中心孔) */
+.brand-logo {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: conic-gradient(#ff8a3d, #ff4d7a, #a26bfa, #ff8a3d);
+  flex-shrink: 0;
+}

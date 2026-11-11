@@ -1,16 +1,219 @@
+/* 集群保障时间轴 · 1:1 还原
+   卡片画布区域 (556,929,1340×126):absolute 定位到 1920×1080 画布(app-root) */
 .timeline-area {
-  flex-shrink: 0;
+  position: absolute;
+  left: 556px;
+  top: 929px;
+  width: 1340px;
   height: 126px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-container-highest);
-  border-radius: var(--radius-container);
-  box-shadow: var(--shadow-card);
 }
 
-.timeline-area-name {
-  color: var(--on-surface-variant);
-  font: var(--font-headline-s);
-  font-weight: var(--font-weight-medium);
+/* 资产图层 */
+.timeline-area .tl-img {
+  position: absolute;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* 通用文字:绝对定位 */
+.tl-t {
+  position: absolute;
+  white-space: nowrap;
+  font-family: var(--font-family);
+  font-size: 12px;
+  line-height: 20px;
+  color: #777;
+}
+
+/* 图例:图标 16×16 + 文字 */
+.tl-lg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tl-lg img {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+/* 图例组间分隔线:1px × 14px */
+.tl-sep {
+  position: absolute;
+  width: 1px;
+  height: 14px;
+  background: #dadde3;
+}
+
+/* 时间刻度:宽 56 居中于刻度点 */
+.tl-tick {
+  width: 56px;
+  text-align: center;
+}
+
+/* 当前时间:白色文字叠在 tl-now 蓝标签上 */
+.tl-now-text {
+  width: 56px;
+  text-align: center;
+  color: #ffffff;
+}
+
+/* 右侧时钟图标 */
+.tl-clock-svg {
+  position: absolute;
+  display: block;
+}
+
+/* —— 事件胶囊交互(第3批 B;默认静态不变) —— */
+.tl-event-hot {
+  position: absolute;
+  cursor: pointer;
+}
+
+.tl-event-hot .tl-event-pill {
+  transition: transform 200ms ease-out, filter 200ms ease-out;
+}
+
+.tl-event-hot:hover .tl-event-pill {
+  transform: translateY(-2px);
+  filter: drop-shadow(0 6px 14px rgba(40, 60, 120, 0.25));
+}
+
+.tl-event-tip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tl-event-hot:hover .tl-event-tip {
+  display: flex;
+}
+
+.tl-event-tip-title {
+  color: #191919;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.tl-event-tip-sub {
+  color: #777;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+
+.tl-event-closed-circle {
+  position: absolute;
+  left: 18px;
+  top: 19px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #8a8f99;
+}
+
+.tl-event-closed-circle::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 9px solid #ffffff;
+  transform: translateY(-2px);
+}
+
+.tl-event-closed-badge {
+  position: absolute;
+  right: -4px;
+  top: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #8a8f99;
+}
+
+/* 已闭环胶囊(D-08 恢复后):灰三角 + 灰圆白三角 + 对勾徽标;主体与原胶囊同位 */
+.tl-closed-pill {
+  position: absolute;
+  left: 0;
+  top: 12.55px; /* 与原胶囊主体(胶囊底边 y59.15 对齐轨道)同高 */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 10px;
+  background: #ffffff;
+  border: 1px solid #e6e8ee;
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(80, 90, 160, 0.06);
+}
+
+/* 左圆:白底圆托 + 14px 灰线框三角(与 12:00 组灰三角一致) */
+.tl-closed-tri-wrap {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f2f3f5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tl-closed-circle {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #8a8f99;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tl-closed-mini-tri {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 9px solid #ffffff;
+  margin-top: -2px;
+}
+
+.tl-closed-badge {
+  position: absolute;
+  top: -8px;
+  right: -9px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #8a8f99;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tl-closed-badge img {
+  width: 14px;
+  height: 14px;
+  display: block;
 }

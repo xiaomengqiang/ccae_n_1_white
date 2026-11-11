@@ -21,3 +21,9 @@ desktop.ini
 # 日志
 *.log
 npm-debug.log*
+
+# 单文件 demo 构建产物(约 28MB,本地 node scripts/build-standalone.mjs 生成)
+dist/
+
+# Figma 资源抓取脚本(含临时签名链接)
+design-ref/fetch-*.sh
