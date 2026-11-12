@@ -1,0 +1,14 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="315.562" height="204.188" viewBox="0 0 315.562 204.188" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="&#230;&#161;&#140;&#233;&#157;&#162;&#229;&#156;&#186;&#230;&#153;&#175; / &#231;&#139;&#172;&#231;&#171;&#139;&#228;&#186;&#186;&#231;&#137;&#169;&#228;&#184;&#142;Atlas&#232;&#174;&#190;&#229;&#164;&#135;">
+<g id="&#232;&#144;&#189;&#229;&#156;&#176;&#230;&#159;&#148;&#229;&#189;&#177;" filter="url(#filter0_f_0_6)">
+<ellipse cx="151.594" cy="185.625" rx="139.219" ry="6.1875" fill="#47759E" fill-opacity="0.08"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_f_0_6" x="0" y="167.062" width="303.188" height="37.125" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="6.1875" result="effect1_foregroundBlur_0_6"/>
+</filter>
+</defs>
+</svg>

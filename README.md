@@ -45,3 +45,28 @@ node .opencode/skills/ict-coder/scripts/verify-build.mjs --dir "preview-3d"
 ## AI 协作
 
 - 本仓库同时有 `AGENTS.md`(AI 工具自动读取的入口指针):本 readme 即唯一内容源,AI 会话开始前请完整阅读本文件。
+
+## Qwen 浅色故事 Demo
+
+- 当前预览从 `preview/src/views/ai-panel/index.jsx` 临时挂载独立 `QwenStory`，直接进入 **网卡驱动待授权** 状态。故事源码位于 `preview/src/views/qwen-story/`，业务数据与时序位于 `preview/src/mock/qwen.js`。
+- 设计来源为 Figma「N+1任何人可编辑版」的 `2972:106385`（S10 / 11.06反馈修订）和 `2972:110604`（展开全部 / 原文对照）。Figma 只读，原图不修改。实际使用的素材已保存至 `preview/assets/uploads/qwen/`，来源节点与校验值见模块内 `asset-manifest.json`，运行时不请求 Figma。
+- 只包含 Qwen 故事。首页由其他同事实现，节能故事不接入。合并首页时移除 AiPanel 的临时挂载，由首页故事入口渲染 `<QwenStory onBack={返回首页回调} />`；不要直接合并旧的构建产物。没有传 `onBack` 时，返回按钮打开 Qwen 事件概览。
+- 点击「授权升级网卡」后，以演示时长推进到驱动升级中、1.8 秒后健康核查、3.6 秒后恢复闭环。该操作仅改变本地演示状态，不调用真实设备。返回事件概览后可重新演示。
+- 实时处理阶段与历史回看时刻分离。6 / 9 / 12 秒分别表示操作系统故障、实例退出、业务劣化；服务总览在修复前始终保持原稿的橙色劣化状态和 77.5% 成功率；图表仍展示各时刻的历史指标。恢复后回看历史不会退回已完成的授权状态。时间范围菜单内「回到最新」、再次点击选中的事件或按 Escape 可回到最新状态。
+- 拓扑每个实例显示 8 个 N 和 2 个 C；CPU/NPU 的 U 位沿用深色 Demo 映射。悬浮或键盘聚焦节点联动对应机柜，未关联槽位置灰，故障 CPU 独立保留高亮直至恢复。
+- 「处理环节」沿用 S07（`2972:105547`）圆角卡片与时间刻度样式，保留 Qwen 原故事的分支及全部处理内容；非待处理环节用深色 Demo 的绿色机器人，待处理用 S07 红色手。
+- 主页面沿用现有构建命令。`src/components/story-chart/` 适配仓库内 HUICharts 的 `setResize/uninstall` 生命周期，避免自带通用封装的接口不匹配；未改动共享库及 3D 工程。
+- 先构建和预览验收，仅在用户通知后用中文提交并推送 GitHub。
+
+浏览器回归测试（需要 Node.js 18+ 和测试环境中的 Playwright；不增加页面运行依赖）：
+
+```bash
+# 仓库根目录启动服务
+python3 -m http.server 8765 --bind 127.0.0.1
+# 另一终端；Playwright 可安装在仓库外，通过 NODE_PATH 指向其 node_modules
+NODE_PATH=/path/to/test-tools/node_modules \
+CHROME_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+node tests/qwen-story.browser.cjs
+```
+
+测试覆盖初始画面、素材加载、过程折叠、证据查看、故障回看、指标切换、机柜联动、处理环节、授权至闭环、恢复后回看、重置以及 1440×900 缩放。截图写入 `/tmp/ccae-qwen-*.png`。无头构建验证与这些真实浏览器检查分别执行。
