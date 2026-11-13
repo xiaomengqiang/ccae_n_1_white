@@ -1,0 +1,371 @@
+/* S03 右侧诊断区内容(光链路 / Qwen) */
+.dr-opt-topo {
+  position: absolute;
+  left: 24px;
+  top: 68px; /* 画布 (556,116) 相对 dt-right(532,48) */
+  width: 1332px;
+  height: 722px;
+  display: block;
+  user-select: none;
+}
+
+.dr-opt-process {
+  position: absolute;
+  left: 18px;
+  top: 798px; /* 画布 (550,846) */
+  width: 1344px;
+  height: 210px;
+  display: block;
+  user-select: none;
+}
+
+/* 状态提示框(白底圆角8 阴影 左三角) */
+.dr-tip {
+  position: absolute;
+  width: 340px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 16px;
+  box-sizing: border-box;
+  animation: dr-tip-in 200ms ease-out;
+  z-index: 5;
+}
+
+@keyframes dr-tip-in {
+  from {
+    opacity: 0;
+    transform: translateX(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.dr-tip-opt {
+  left: 348px; /* 画布 (880,354) */
+  top: 306px;
+  height: 86px;
+}
+
+.dr-tip-qw {
+  left: 696px; /* 画布 (1252,431) 相对诊断卡(556,116) */
+  top: 315px;
+  width: 372px;
+  height: 108px;
+}
+
+.dr-tip-arrow {
+  position: absolute;
+  left: -8px;
+  top: 34px;
+  width: 11px;
+  height: 18px;
+  background: #ffffff;
+  clip-path: polygon(100% 0, 100% 100%, 0 50%);
+  filter: drop-shadow(-2px 0 2px rgba(0, 0, 0, 0.08));
+}
+
+.dr-tip-arrow-down {
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 18px;
+  height: 11px;
+  background: #ffffff;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.06));
+}
+
+.dr-tip-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dr-tip-title {
+  color: #191919;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+}
+
+.dr-tip-tag {
+  margin-left: 8px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: #fee7e8;
+  color: #e02128;
+  font-size: 12px;
+  line-height: 20px;
+  flex-shrink: 0;
+}
+
+.dr-tip-body {
+  margin: 4px 0 0 30px;
+  color: #777;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.dr-tip-qw .dr-tip-body {
+  color: #555;
+}
+
+/* 热区 */
+.dr-zone {
+  position: absolute;
+  border: 2px solid transparent;
+  background: rgba(0, 103, 209, 0.03);
+  padding: 0;
+  cursor: pointer;
+  border-radius: 4px;
+  z-index: 4;
+  box-sizing: border-box;
+  transition: border-color 120ms ease-out, background-color 120ms ease-out;
+}
+
+.dr-zone:hover {
+  border-color: #0067d1;
+  background: rgba(0, 103, 209, 0.06);
+}
+
+/* 处理环节节点热区 */
+.dr-node {
+  position: absolute;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  z-index: 4;
+}
+
+.dr-node-flash {
+  background: #e6f2fd;
+  animation: dr-flash 0.6s ease-out;
+}
+
+@keyframes dr-flash {
+  0% { background: #cce3fb; }
+  100% { background: #e6f2fd; }
+}
+
+/* hover 小提示 */
+.dr-hover-tip {
+  position: absolute;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+  color: #191919;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* —— Qwen 诊断卡 —— */
+.dr-qw-card {
+  position: absolute;
+  left: 24px;
+  top: 68px; /* (556,116) */
+  width: 1332px;
+  height: 720px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.dr-qw-metrics {
+  position: absolute;
+  left: 2px;
+  top: 2px; /* (558,118) 相对卡 */
+  width: 1322px;
+  height: 148px;
+  display: block;
+  user-select: none;
+}
+
+.dr-qw-topo {
+  position: absolute;
+  left: 18px;
+  top: 177px; /* (574,293) 相对卡 */
+  width: 1090px;
+  height: 470px;
+  display: block;
+  user-select: none;
+}
+
+.dr-qw-cabinet {
+  position: absolute;
+  left: 1104px;
+  top: 197px; /* (1660,313) */
+  width: 228px;
+  height: 488px;
+  display: block;
+  user-select: none;
+}
+
+/* —— Qwen 底部卡 —— */
+.dr-qw-bottom {
+  position: absolute;
+  left: 18px;
+  top: 799px; /* (550,847) */
+  width: 1344px;
+  height: 222px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.dr-tabs {
+  position: absolute;
+  left: 26px;
+  top: 18px;
+  display: flex;
+  gap: 16px;
+  z-index: 3;
+}
+
+.dr-tab {
+  border: none;
+  background: transparent;
+  color: #191919;
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 24px;
+  padding: 0 2px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.dr-tab-on {
+  color: #0067d1;
+  border-bottom-color: #0067d1;
+}
+
+.dr-qw-journey {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1344px;
+  height: 222px;
+  display: block;
+  user-select: none;
+}
+
+.dr-journey-dot {
+  position: absolute;
+  top: 173px; /* 画布 1022 − 卡顶847 */
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 3;
+}
+
+/* —— DOM 版处理环节时间线 —— */
+.dr-process-strip {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  z-index: 2;
+}
+
+.dr-ps-line {
+  position: absolute;
+  left: 616px;
+  right: 116px;
+  top: 64px;
+  height: 2px;
+  background: #dfdfdf;
+}
+
+.dr-ps-node {
+  position: absolute;
+  top: 48px;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.dr-ps-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #09aa71;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dr-ps-dot img {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.dr-ps-node-cur .dr-ps-dot {
+  border: 2px solid #e02128;
+  box-shadow: 0 0 0 4px rgba(224, 33, 40, 0.12);
+}
+
+.dr-ps-hand {
+  animation: dr-spin 2s linear infinite;
+}
+
+@keyframes dr-spin {
+  to { transform: rotate(360deg); }
+}
+
+.dr-ps-name {
+  color: #191919;
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.dr-ps-desc {
+  color: #777;
+  font-size: 12px;
+  line-height: 20px;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dr-ps-time {
+  color: #777;
+  font-size: 12px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* D-08 恢复绿色六边形(画布(1485,580)→诊断卡(556,116):left 929,top 464) */
+.dr-hex-normal {
+  position: absolute;
+  left: 929px;
+  top: 464px;
+  width: 95px;
+  height: 102px;
+  animation: dr-fade-in-400 400ms ease-out;
+  z-index: 5;
+  pointer-events: none;
+}
+
+@keyframes dr-fade-in-400 {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

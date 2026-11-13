@@ -37,9 +37,18 @@ const Chart = forwardRef(function Chart(
     if (renderedRef.current) renderedRef.current(chart);
 
     // 容器尺寸变化(侧栏折叠/窗口缩放/响应式) → 同步画布
-    const ro = new ResizeObserver(() => {
-      if (chartRef.current && !chartRef.current._disposed) chart.resize();
-    });
+    // 注:HUICharts 实例无 resize 方法,需取其内部 echarts 实例调用
+    const syncSize = () => {
+      const c = chartRef.current;
+      if (!c || c._disposed) return;
+      if (typeof c.resize === "function") {
+        c.resize();
+        return;
+      }
+      const ec = typeof c.getEchartsInstance === "function" ? c.getEchartsInstance() : null;
+      if (ec && typeof ec.resize === "function") ec.resize();
+    };
+    const ro = new ResizeObserver(syncSize);
     ro.observe(dom);
 
     return () => {
@@ -54,7 +63,14 @@ const Chart = forwardRef(function Chart(
   useImperativeHandle(ref, () => ({
     getEchartsInstance: () => (chartRef.current ? chartRef.current.getEchartsInstance() : null),
     resizeHandler: () => {
-      if (chartRef.current) chartRef.current.resize();
+      const c = chartRef.current;
+      if (!c) return;
+      if (typeof c.resize === "function") {
+        c.resize();
+        return;
+      }
+      const ec = typeof c.getEchartsInstance === "function" ? c.getEchartsInstance() : null;
+      if (ec && typeof ec.resize === "function") ec.resize();
     },
   }), []);
 

@@ -1,8 +1,28 @@
 /* 应用级基础样式 — 页面整体布局骨架(Layer 5) */
+/* 大屏等比缩放壳:视口铺满 + 页面灰留白 + 画布居中 */
+.app-shell {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #f3f3f3;
+}
+
+.dark .app-shell {
+  background: var(--surface-container-lowest);
+}
+
+/* 设计画布:固定 1920×1080,整体 scale(由 App 的 resize 监听注入),布局恒定 */
 .app-root {
+  width: 1920px;
+  height: 1080px;
+  flex: none;
+  overflow: hidden;
+  transform-origin: center center;
   display: flex;
   flex-direction: column;
-  height: 100vh;
   background: var(--surface-container-lowest);
   color: var(--on-surface);
   font: var(--font-body-m);
@@ -14,12 +34,55 @@
   min-height: 0;
 }
 
+/* 主区域:浅灰 #F0F1F4 底,内容与页面边缘 16px 间距(顶部 24px) */
 .app-main {
   display: flex;
   flex-direction: column;
   flex: 1 1 0;
   min-width: 0;
   min-height: 0;
-  gap: var(--spacing-section);
-  padding: var(--spacing-section);
+  gap: 16px;
+  padding: 24px 16px 16px;
+  background: #f3f3f3;
+}
+
+.dark .app-main {
+  background: var(--surface-container-lowest);
+}
+
+/* 指标卡/时间轴 absolute 到画布后的 flex 占位(卡高 + 下侧 gap) */
+.metrics-ph {
+  flex-shrink: 0;
+  height: 170px;
+}
+
+.timeline-ph {
+  flex-shrink: 0;
+  height: 142px;
+}
+
+/* S02:3D 机柜区淡出/淡入(home↔业务视图;iframe 保留 DOM) */
+.cabinet-fade {
+  display: contents; /* 完全透明包裹:不产生盒、不做定位父级 */
+  opacity: 1;
+  transition: none;
+}
+
+/* 淡出改作用于 .cabinet-area 本体(其 position 已是 relative,视觉下移不改变它作为绝对定位上下文?——cabinet-area 内无画布级 absolute 子元素,标题/时间/工具条在它外面) */
+.cabinet-fade-hidden .cabinet-area {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.cabinet-fade-hidden .cabinet-bg-bleed,
+.cabinet-fade-hidden .cabinet-area-title,
+.cabinet-fade-hidden .cabinet-area-time,
+.cabinet-fade-hidden .cabinet-toolbar,
+.cabinet-fade-hidden .cabinet-toolbar-refresh,
+.cabinet-fade-hidden .cabinet-toolbar-zoom,
+.cabinet-fade-hidden .cabinet-toolbar-hot {
+  opacity: 0;
+  pointer-events: none;
 }

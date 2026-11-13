@@ -1,0 +1,274 @@
+/* S03 诊断详情页:左侧事件面板 */
+.dt-panel {
+  position: absolute;
+  left: 48px;
+  top: 48px;
+  width: 484px;
+  height: 1032px;
+  background: #ffffff;
+  border-right: 1px solid #efefef;
+  z-index: 40;
+  animation: dt-slide-in 220ms ease-out;
+  overflow: hidden;
+}
+
+@keyframes dt-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.dt-panel-hidden {
+  /* 工具条收起时左移出画布(第2批接入) */
+  transform: translateX(-484px);
+  transition: transform 250ms ease-out;
+}
+
+.dt-header {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 484px;
+  height: 112px;
+  display: block;
+  user-select: none;
+}
+
+.dt-back-hot {
+  position: absolute;
+  left: 24px;
+  top: 48px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.dt-back-hot:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dt-more-hot {
+  position: absolute;
+  left: 438px;
+  top: 44px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.dt-more-hot:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dt-head-divider {
+  position: absolute;
+  left: 0;
+  top: 112px; /* 相对面板(画布160 − 48) */
+  width: 484px;
+  height: 1px;
+  background: #eeeeee;
+}
+
+.dt-scroll {
+  position: absolute;
+  left: 0;
+  top: 113px; /* 相对面板(画布161 − 48) */
+  width: 484px;
+  height: 839px; /* 到 y1000 */
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 16px 16px 24px;
+  box-sizing: border-box;
+  background: #ffffff;
+}
+
+.dt-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.dt-summary {
+  display: block;
+  width: 452px;
+  height: 270px;
+  user-select: none;
+  margin-top: 0; /* 滚动区 padding-top 16 → 画布 (64,177) */
+}
+
+.dt-input-zone {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 484px;
+  height: 80px;
+  background: #ffffff;
+}
+
+.dt-input-bg {
+  position: absolute;
+  left: 20px;
+  top: 20px; /* 相对 input-zone(画布 y1020 − zone顶1000) */
+  width: 444px;
+  height: 48px;
+  display: block;
+  user-select: none;
+}
+
+.dt-input {
+  position: absolute;
+  left: 38px;
+  top: 35px;
+  width: 378px;
+  height: 22px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 22px;
+  color: #191919;
+}
+
+.dt-input::placeholder {
+  color: #aeaeae;
+}
+
+/* —— 右侧诊断区 —— */
+.dt-right {
+  position: absolute;
+  left: 532px;
+  top: 48px;
+  width: 1388px;
+  height: 1032px;
+  background: #f3f3f3;
+  z-index: 30;
+  animation: dt-fade-up 250ms ease-out 60ms both;
+}
+
+@keyframes dt-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dt-right-expanded {
+  left: 48px;
+  width: 1872px;
+  transition: left 250ms ease-out, width 250ms ease-out;
+}
+
+.dt-toolbar {
+  position: absolute;
+  left: 24px;
+  top: 22px;
+  right: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dt-toolbar-title {
+  color: #191919;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+}
+
+.dt-toolbar-zoom {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dt-toolbar-zoom:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dt-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #aeaeae;
+  font-size: 14px;
+  padding-top: 60px;
+}
+
+.dt-placeholder img {
+  width: 32px;
+  height: 32px;
+  opacity: 0.4;
+}
+
+/* 仅工具条层(背景透明,不挡 §4/§5 内容) */
+.dt-right-toolbar-only {
+  background: transparent;
+  pointer-events: none;
+  animation: none;
+  z-index: 50;
+}
+
+.dt-right-toolbar-only .dt-toolbar {
+  pointer-events: auto;
+}
+
+/* 已恢复标签(覆盖页头待人工处理,画布(330,66)→面板(282,18)) */
+.dt-restored-tag {
+  position: absolute;
+  left: 282px;
+  top: 18px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 4px;
+  background: #e7fbf2;
+  color: #09aa71;
+  font-size: 12px;
+  line-height: 20px;
+  z-index: 2;
+}
+
+/* toast */
+.dt-toast {
+  position: absolute;
+  left: 50%;
+  top: 24px;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #1f2329;
+  color: #ffffff;
+  font-size: 13px;
+  line-height: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  z-index: 60;
+  animation: dt-fade-up 200ms ease-out;
+}

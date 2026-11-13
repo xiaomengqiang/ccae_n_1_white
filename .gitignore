@@ -1,0 +1,29 @@
+# 依赖(本工程脚本零依赖,预防性忽略)
+node_modules/
+
+# 工具私有目录
+.octo/
+
+# VS Code Local History 插件产物
+preview/.history/
+preview-3d/.history/
+
+# 操作系统杂项
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器/IDE
+.vscode/
+.idea/
+*.swp
+
+# 日志
+*.log
+npm-debug.log*
+
+# 单文件 demo 构建产物(约 28MB,本地 node scripts/build-standalone.mjs 生成)
+dist/
+
+# Figma 资源抓取脚本(含临时签名链接)
+design-ref/fetch-*.sh

@@ -1,16 +1,15 @@
+/* 左侧图标栏 · 1:1:白底 + 右侧 1px 边线,图标为原稿 PNG 绝对定位 */
 .side-nav {
+  position: relative;
   flex-shrink: 0;
   width: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: var(--surface-container-highest);
-  border-right: 1px solid var(--divider);
+  border-right: 1px solid #e2e2e2;
 }
 
-.side-nav-name {
-  writing-mode: vertical-rl;
-  letter-spacing: 0.25em;
-  color: var(--on-surface-variant);
-  font: var(--font-body-s);
+.side-nav img {
+  position: absolute;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
 }
