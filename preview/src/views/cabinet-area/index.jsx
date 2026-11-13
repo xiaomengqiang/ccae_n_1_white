@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { Icon } from "../../../assets/shared/icon.jsx";
 import { cabinetScene } from "../../mock/cabinet.js";
 import "./index.css";
+import { useApp } from "../../context.jsx";
+
+import CabinetDetail from "./detail.jsx";
 
 const S01 = "./assets/uploads/s01";
 
@@ -24,6 +27,36 @@ function postTo3D(msg) {
 
 // 机柜区 · 1:1 + 第11轮 2.5 工具条交互(默认静态不变)
 export default function CabinetArea() {
+  const { bizOnly, detail, view } = useApp();
+  const [pod, setPod] = useState(null);
+  const [inCabinet, setInCabinet] = useState(false);
+  const returnToOverview = () => { setInCabinet(false); postTo3D({type:"cabinetReturn"}); };
+  useEffect(() => {
+    const receive = e => {
+      const frame = document.querySelector(".cabinet-area-frame");
+      if(e.source !== frame?.contentWindow) return;
+      if(e.data?.type === "cabinetEnter" && /^[A-H]$/.test(e.data.pod)) {
+        setPod(e.data.pod); setInCabinet(true); setFullscreen(false);
+      }
+    };
+    window.addEventListener("message", receive);
+    return () => window.removeEventListener("message", receive);
+  }, []);
+  useEffect(() => {
+    if(!inCabinet || detail) return;
+    const key = e => { if(e.key === "Escape") returnToOverview(); };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [inCabinet, detail]);
+  useEffect(() => {
+    const frame = document.querySelector(".cabinet-area-frame");
+    const sync = () => postTo3D({ type: "impactFilter", enabled: bizOnly });
+    const receive = event => { if (event.source === frame?.contentWindow && event.data?.type === "sceneReady") sync(); };
+    sync();
+    frame?.addEventListener("load", sync);
+    window.addEventListener("message", receive);
+    return () => { frame?.removeEventListener("load", sync); window.removeEventListener("message", receive); };
+  }, [bizOnly]);
   const [zoomPct, setZoomPct] = useState(100);
   const [fullscreen, setFullscreen] = useState(false);
 
@@ -65,11 +98,11 @@ export default function CabinetArea() {
   return (
     <>
       {/* 3D 视口(flex 流内;全屏时覆盖右侧主区 x548–1904 y48–1080) */}
-      <div className={fullscreen ? "cabinet-area cabinet-area-fullscreen" : "cabinet-area"}>
+      <div className={`cabinet-area ${fullscreen ? "cabinet-area-fullscreen" : ""} ${inCabinet ? "is-detail" : ""}`}>
         {!fullscreen ? <span className="cabinet-bg-bleed" aria-hidden="true" /> : null}
         <iframe
           className="cabinet-area-frame"
-          src="../preview-3d/index.page.html"
+          src="../preview-3d/index.page.html?v=s02-20261113-solid-materials"
           title="机柜绘制区域 3D 视图"
         />
         {fullscreen ? (
@@ -87,6 +120,7 @@ export default function CabinetArea() {
         ) : null}
       </div>
 
+      {!inCabinet && <>
       {/* 标题:文字框左上角画布 (556,263) */}
       <span className="cabinet-area-title">{cabinetScene.title}</span>
 
@@ -118,6 +152,8 @@ export default function CabinetArea() {
           onClick={() => onHot(zone)}
         />
       ))}
+      </>}
+      <CabinetDetail pod={pod || "A"} active={inCabinet && !detail && view === "home"} onBack={returnToOverview}/>
     </>
   );
 }

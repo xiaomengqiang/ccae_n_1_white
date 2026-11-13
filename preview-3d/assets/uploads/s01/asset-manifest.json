@@ -1,0 +1,57 @@
+{
+  "fileKey": "iWYLbzWDrJyymSkBsaVtEK",
+  "frame": "2972:95072",
+  "name": "S01 · 首页 / 11.06反馈修订",
+  "assets": [
+    {
+      "file": "fault-pin.svg",
+      "node": "2972:98503",
+      "sha256": "5be79ef2df01ef84beb713c6747e9ff59dfee09dbfa08e3475ce4a5abcfff885"
+    },
+    {
+      "file": "manual.svg",
+      "node": "2972:98546",
+      "sha256": "28fa5ea000f2cc438b91307679a9aa657793b32aff7bfe19fcd211cce395c140"
+    },
+    {
+      "file": "auto.svg",
+      "node": "2972:95400",
+      "sha256": "e0a65b4d331c42d2d0dc71422a087c070653f3650a95d022b5864bc89eded883"
+    },
+    {
+      "file": "fault-triangle.png",
+      "node": "2972:98376",
+      "sha256": "4c8254fb7ffeae1f726d5b93c81d91162984488f80f53c6f923b4fa24ea3a81b"
+    },
+    {
+      "file": "manual-count.png",
+      "node": "2972:97364",
+      "sha256": "7bc6aaa0ee757ca056d15fa3aff149c1726222d07fcfdf113fbcf3b78d39aae2"
+    },
+    {
+      "file": "manual-count.svg",
+      "node": "2972:97366",
+      "sha256": "f1988e63980d7b622103aa0eb39a8f0163c3c45e4e86a1617c6ba9709bfc05bd"
+    },
+    {
+      "file": "fault-fill.svg",
+      "node": "2972:98412",
+      "sha256": "cde545549980ad5eedf4f27b830db3ef977e05c1d9a89a6d5b63304db846461f"
+    },
+    {
+      "file": "fault-mark.svg",
+      "node": "2972:98415",
+      "sha256": "a6f6ab1f56b1705d68f282ee6cf7433a01546d3a780404fbd74de61cd34d9672"
+    },
+    {
+      "file": "fault-exclamation.svg",
+      "source": "Code vector replacement for empty Figma export 2972:98415; white 1.166 x 6.738 exclamation",
+      "sha256": "89c7812dbfb7e5fe0bd267d20f94b4d5269d1e63d95b4c79e492fafa48df2ee9"
+    }
+  ],
+  "tints": {
+    "fault": "2972:95294",
+    "auto": "2972:95396"
+  },
+  "compositionNote": "地图气泡使用透明 SVG 原稿；聚合胶囊依据 2972:97365 尺寸32×20、白底、0.833红边绘制。旧PNG含不透明画板背景，不再使用。"
+}

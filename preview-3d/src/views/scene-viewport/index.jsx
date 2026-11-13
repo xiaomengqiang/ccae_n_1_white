@@ -1,22 +1,32 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useThreeScene } from "../../hooks/use-three-scene.js";
 import "./index.css";
 
-// 3D 机柜视口:canvas + 交互提示卡(hook 内管理)。
-// 第13轮:编号/铭牌/气泡已全部 3D 化(贴地纹理/竖立平面/Sprite),不再用 DOM 覆盖层。
 export default function SceneViewport() {
   const containerRef = useRef(null);
-  const { status } = useThreeScene(containerRef);
-
+  const { status, retry } = useThreeScene(containerRef);
+  const [resolved, setResolved] = useState(false);
+  useEffect(() => {
+    const receive = (event) => {
+      if (event.data?.type === "resolveCabinet" && event.data.id === "D-08") setResolved(true);
+    };
+    window.addEventListener("message", receive);
+    return () => window.removeEventListener("message", receive);
+  }, []);
+  useEffect(() => {
+    if (status === "ready" || status === "error") window.parent.postMessage({type:"sceneReady"}, "*");
+    if (status === "ready" && resolved) window.postMessage({type:"resolveCabinet",id:"D-08"}, "*");
+  }, [status, resolved]);
   return (
-    <div ref={containerRef} className="scene-viewport">
-      {status === "error" ? (
-        <div className="scene-viewport-overlay">
-          <span className="scene-viewport-status scene-viewport-status-error">
-            three.js 未注入(检查 assets/library/three.min.js)
-          </span>
+    <div ref={containerRef} className="scene-viewport" data-render-status={status}>
+      {status === "error" ? <div className="scene-fallback">
+        <img src={`./assets/uploads/scene/overview${resolved ? "-resolved" : ""}.png`} alt="机柜阵列静态预览" />
+        <div className="scene-fallback-notice" role="status">
+          <span>静态预览 · 当前浏览器暂无法启用 3D</span>
+          <button type="button" onClick={retry}>重试 3D</button>
+          <button type="button" onClick={()=>window.parent.postMessage({type:"cabinetEnter",pod:"A"},"*")}>查看超节点 A 机柜详情</button>
         </div>
-      ) : null}
+      </div> : null}
     </div>
   );
 }

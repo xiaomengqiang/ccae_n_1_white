@@ -217,3 +217,10 @@
   height: 14px;
   display: block;
 }
+
+.tl-single-state{position:absolute;width:84px;height:59px}
+.tl-single-glass{position:absolute;inset:0;width:84px;height:59px}
+.tl-single-state.closed .tl-single-glass{filter:grayscale(1);opacity:.65}
+.tl-state-badge{position:absolute;left:49px;top:5px;width:20px;height:20px;background:white;border-radius:50%;padding:2px}
+.tl-state-impact{position:absolute;left:66px;top:5px;width:20px;height:20px;background:white;border-radius:50%;padding:2px}
+.tl-event-hot:focus-visible .tl-event-tip{display:flex}

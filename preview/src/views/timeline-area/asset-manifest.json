@@ -1,0 +1,57 @@
+{
+  "fileKey": "iWYLbzWDrJyymSkBsaVtEK",
+  "artboard": "2972:100898",
+  "assets": [
+    {
+      "file": "../../../assets/uploads/s01/tl-figma-0.svg",
+      "nodeId": "3066:146491",
+      "export": "SVG_STRING",
+      "bounds": {
+        "x": 3152,
+        "y": 11726,
+        "width": 56,
+        "height": 30.4210205078125
+      },
+      "renderBounds": {
+        "x": 3139.5546875,
+        "y": 11713.5546875,
+        "width": 83.65625,
+        "height": 58.0771484375
+      }
+    },
+    {
+      "file": "../../../assets/uploads/s01/tl-figma-1.svg",
+      "nodeId": "3066:146394",
+      "export": "SVG_STRING",
+      "bounds": {
+        "x": 3603,
+        "y": 11726,
+        "width": 56,
+        "height": 30.4210205078125
+      },
+      "renderBounds": {
+        "x": 3590.5546875,
+        "y": 11713.5546875,
+        "width": 95.89501953125,
+        "height": 58.0771484375
+      }
+    },
+    {
+      "file": "../../../assets/uploads/s01/tl-figma-2.svg",
+      "nodeId": "3055:156894",
+      "export": "SVG_STRING",
+      "bounds": {
+        "x": 3351.5146484375,
+        "y": 11718,
+        "width": 78.22705078125,
+        "height": 37.8897705078125
+      },
+      "renderBounds": {
+        "x": 3339.0693359375,
+        "y": 11713.0234375,
+        "width": 92.644287109375,
+        "height": 58.0771484375
+      }
+    }
+  ]
+}

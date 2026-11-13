@@ -9,11 +9,23 @@ export function AppProvider({ children }) {
   const [view, setView] = useState("home");
   const [detail, setDetail] = useState(null);
   const [detailFrom, setDetailFrom] = useState("home");
-  const [resolved, setResolved] = useState(false); // true = Qwen 授权升级已完成
+  const [bizOnly, setBizOnly] = useState(false);
+  const [qwenStage, setQwenStage] = useState(6);
+  const resolved = qwenStage === 9; // true = Qwen 授权升级已完成
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
+
+  // 用户先返回首页时，后台演示完成也要同步机柜状态。
+  useEffect(() => {
+    if (!resolved) return;
+    const frame = document.querySelector(".cabinet-area-frame");
+    const sync = () => frame?.contentWindow?.postMessage({ type: "resolveCabinet", id: "D-08" }, "*");
+    sync();
+    frame?.addEventListener("load", sync);
+    return () => frame?.removeEventListener("load", sync);
+  }, [resolved]);
 
   const openDetail = (id) => {
     setDetailFrom(view);
@@ -37,12 +49,14 @@ export function AppProvider({ children }) {
   useEffect(() => {
     const onKey = (e) => {
       if (e.key !== "Escape") return;
+      // Qwen 的 Escape 留给历史回看、抽屉等局部交互。
+      if (detail === "qwen") return;
       if (detail) { closeDetail(); return; }
       if (view !== "home") setView("home");
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [detail, view]);
+  }, [detail, view, resolved]);
 
   const value = {
     isDark,
@@ -54,7 +68,12 @@ export function AppProvider({ children }) {
     openDetail,
     closeDetail,
     resolved,
-    markResolved: () => setResolved(true),
+    qwenStage,
+    bizOnly,
+    setBizOnly,
+    setQwenStage,
+    faultCount: resolved ? 3 : 4,
+    markResolved: () => setQwenStage(9),
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

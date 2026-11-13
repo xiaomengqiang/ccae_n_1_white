@@ -126,7 +126,7 @@ main = inlineLibs(main, "preview");
 main = inlineFonts(main, "preview");
 
 const before = main;
-main = main.replace(/src="\.\.\/preview-3d\/index\.page\.html"/g, "src={window.__CAB3D_URL}");
+main = main.replace(/src="\.\.\/preview-3d\/index\.page\.html(?:\?[^"\s]*)?"/g, "src={window.__CAB3D_URL}");
 if (main === before) throw new Error("未找到 3D iframe 的 src，构建中止");
 
 mkdirSync(dirname(OUT), { recursive: true });

@@ -1,0 +1,25 @@
+{
+  "fileKey": "iWYLbzWDrJyymSkBsaVtEK",
+  "frame": "2972:98551",
+  "name": "S02 · 机柜 / 11.06反馈修订",
+  "artworkNode": "2972:98552",
+  "implementation": "Native React geometry and scoped CSS converted from Figma design context; no page screenshot used as UI",
+  "assets": [
+    "3b273.svg",
+    "20cdc.svg",
+    "f369c.svg"
+  ],
+  "assetSource": "https://www.figma.com/api/mcp/asset/eecc4ea3-c60a-4470-b575-d3c2bfb44169",
+  "reusedIcons": [
+    "../qwen/original-fault.svg",
+    "../s01/lg-impact.svg"
+  ],
+  "motionReference": "/Users/mac/Documents/codex/CCAE26N+1-AgentDemo-2026-11-13/源码/home/multi-cabinet-scene.html",
+  "motion": {
+    "enterMs": 1500,
+    "handoffProgress": 1,
+    "dissolveMs": 320,
+    "returnMs": 1450,
+    "returnDelayMs": 320
+  }
+}

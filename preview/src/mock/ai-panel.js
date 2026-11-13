@@ -82,6 +82,7 @@ export const agentEvents = {
   list: [
     {
       key: "evt-link-dirty",
+      storyId: "optical",
       title: "光链路脏污，待清污",
       time: "12:00:40",
       desc: "计算柜11-L1交换板02链路已优雅隔离，等待人工清污",
@@ -90,11 +91,16 @@ export const agentEvents = {
     },
     {
       key: "evt-npu-linkdown",
-      title: "NPU网口linkdown",
-      time: "11:57:00",
-      desc: "SuperpodD · 计算柜08，等待人工处理",
+      storyId: "qwen",
+      title: "Qwen-1.5B服务劣化：网卡驱动版本低，待升级",
+      time: "12:05:12",
+      desc: "112.34.23.1 无可替换节点，服务仍劣化，需人工将 hinic3 从V11.8升级至V13.1",
       affectsBusiness: true,
       focusId: "D-08",
+    },
+    {
+      key: "evt-npu-port", title: "NPU网口linkdown", time: "11:57:00",
+      desc: "SuperpodD · 计算柜08，等待人工处理", affectsBusiness: false, focusId: "D-08",
     },
     {
       key: "evt-npu-firmware",
@@ -117,7 +123,7 @@ export const agentEvents = {
   // 「查看全部」抽屉:6 条 mock(含状态标签)
   drawerList: [
     { key: "d1", title: "光链路脏污，待清污", time: "12:00:40", status: "待人工" },
-    { key: "d2", title: "NPU网口linkdown", time: "11:57:00", status: "待人工" },
+    { key: "d2", title: "Qwen-1.5B服务劣化：网卡驱动版本低", time: "12:05:12", status: "待人工" },
     { key: "d3", title: "NPU驱动固件版本不一致", time: "11:55:00", status: "待人工" },
     { key: "d4", title: "HBM 温度偏高，自动降频中", time: "12:06:12", status: "自动处理中" },
     { key: "d5", title: "冗余电源模块已自动切换", time: "11:32:08", status: "已闭环" },

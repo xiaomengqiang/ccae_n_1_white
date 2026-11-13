@@ -2,7 +2,7 @@
 // status: "interrupt"(中断,含待人工) | "degrade"(劣化) | "stall"(卡死) | "normal"(正常运行)
 
 export const INFER_METRICS = [
-  { key: "total", label: "服务总数", bg: "#E6F2FD", icon: "st-total", value: 16 },
+  { key: "total", label: "运行总数", bg: "#E6F2FD", icon: "st-total", value: 16 },
   { key: "interrupt", label: "中断", bg: "#FEE7E8", icon: "st-interrupt", value: 1, numColor: "#E02128" },
   { key: "stall", label: "卡死", bg: "#FEF5E8", icon: "st-stall", value: 0 },
   { key: "degrade", label: "劣化", bg: "rgba(253,229,92,.6)", icon: "st-degrade", value: 1, numColor: "#C76207" },
@@ -93,3 +93,17 @@ export const TRAIN_JOBS = [
   { key: "job-med-sft", name: "医疗问答 SFT-13B", progress: "59.6", steps: "64800 / 108700", npuCards: 128, mfu: "53.2", iterTime: "0.94", loss: "1.104", manual: "0 / 28", time: "08-22 04:30" },
   { key: "job-fin-pt", name: "金融大模型 增量预训练", progress: "44.2", steps: "52400 / 118500", npuCards: 512, mfu: "46.8", iterTime: "2.16", loss: "1.628", manual: "0 / 33", time: "08-22 04:05" },
 ];
+
+// 与首页故事状态共用：只有 Qwen-1.5B 受本次故障影响。
+export function inferenceServices(stage) {
+  return INFER_SERVICES.map(item => item.key === "svc-qwen15" ? {...item,
+    status:stage === 9 ? "normal" : "degrade", statusLabel:stage === 9 ? "正常运行" : "劣化",
+    successRate:stage === 9 ? "99.94" : "77.50", ttft:stage === 9 ? "182" : "186", tpot:stage === 9 ? "23.6" : "43",
+    requests:stage === 9 ? "124860 / 124781 / 79" : "124860 / 96767 / 28093", failed:stage === 9 ? "79" : "28093",
+    manual:stage === 6 ? "1 / 29" : "0 / 29",
+  } : {...item,status:"normal",statusLabel:"正常运行"});
+}
+export function inferenceMetrics(stage) {
+  const services=inferenceServices(stage);
+  return INFER_METRICS.map(m=>({...m,value:m.key === "total" ? services.length : services.filter(s=>s.status === m.key).length}));
+}

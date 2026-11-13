@@ -3,6 +3,7 @@ import FigmaAsset from "../../components/figma-asset/index.jsx";
 import { Icon } from "../../../assets/shared/icon.jsx";
 // Original Figma SVG layers, positioned in their original icon slots.
 const layers={
+ "manual-processing":[["manual-processing.png","0"]],
  "flow-robot":[["flow-robot.svg","0"]],"flow-hand":[["742f7.svg","0"],["8cff0.svg","30.52% 35.63% 31.25% 30.69%"]],
  "clock":[["edcc1.svg","0"]], "circle":[["37adb.svg","8%"]],
  "circle-check":[["7b87f.svg","0"]], "triangle-alert":[["original-fault.svg","0"]],

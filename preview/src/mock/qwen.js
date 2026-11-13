@@ -7,12 +7,20 @@ export const steps = [
   { title: "资源恢复方案决策", text: "12:06:06 已生成网卡升级方案：将 hinic3 驱动由 V11.8 升级至 V13.1\n无可替换节点，采用原节点人工升级方案；升级后核查驱动版本、D-08 实例和 Qwen-1.5B 服务", evidence: ["处置方案"] },
   { title: "故障恢复", text: "12:06:06 待人工确认执行网卡升级，升级后核查驱动版本、D-08 实例和 Qwen-1.5B 服务" }
 ];
+export const processingTips = {
+ 7: "人工已授权，启动网卡驱动升级",
+ 8: "驱动已升级，启动健康核验"
+};
+export const recoveredTip = {
+ title: "健康核验完成，节点与服务已恢复",
+ detail: "hinic3 已升级至 V13.1，节点、D-08 实例及 Qwen-1.5B 服务健康核验通过。"
+};
 export const events = [
  { second: 6, title: "操作系统崩溃重启", detail: "节点 112.34.23.1 操作系统崩溃重启", stage: 6, section: 1 },
  { second: 9, title: "D-08 实例异常退出", detail: "节点 112.34.23.1 的 D-08 实例因操作系统崩溃重启而异常退出", stage: 6, section: 1 },
  { second: 12, title: "推理服务劣化", detail: "Qwen-1.5B 请求成功率降至77.5%", stage: 6, section: 1 },
  { second: 72, title: "人工授权升级", detail: "正在执行网卡驱动升级，服务尚未恢复", stage: 7, section: 5 },
- { second: 80, title: "驱动已升级，节点与实例恢复待核查", detail: "hinic3 已升级至 V13.1，正在核查节点、D-08 实例及服务健康", stage: 8, section: 5 },
+ { second: 80, title: "驱动已升级，节点与实例恢复待核查", detail: "hinic3 已升级至 V13.1，正在核查节点、D-08 实例及服务健康；核查通过后转为正常状态", stage: 8, section: 5 },
  { second: 95, title: "健康核查通过", detail: "原节点及 D-08 实例健康核查通过，Qwen-1.5B 服务恢复", stage: 9, section: 5 }
 ];
 export const metrics = [

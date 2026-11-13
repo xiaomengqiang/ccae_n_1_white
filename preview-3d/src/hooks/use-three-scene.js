@@ -7,7 +7,7 @@ import { PODS, RACKS_PER_POD, statusOf } from "../mock/racks.js";
 
 // —— 尺寸常量(第8轮:高×1.23;深度按「正面高90/顶面深27+底边不动」精确解得 1.762) ——
 const CAB = { w: 1, h: 5.166, d: 1.762 };
-const PITCH_X = CAB.w * 1.04;           // 相邻机柜中心距(留 4% 缝)
+const PITCH_X = CAB.w;                // 相邻机柜中心距等于柜宽，柜体紧密相接
 const POD_WIDTH = RACKS_PER_POD * PITCH_X - (PITCH_X - CAB.w);
 
 // —— 1:1 对齐参数(第8轮:16 底边目标 + A 排正面高 90px/顶面深 27px,全部精确命中) ——
@@ -16,10 +16,10 @@ const CAM = { radius: 77.931, targetY: -1.413 };
 
 // 各排(row0=G/H … row3=A/B):中心 z、过道宽、整体 x 偏移、左右列柜距缩放
 const PER_ROW = [
-  { z: -14.65, aisle: 7.62, offX: 0.016, sL: 1.1033, sR: 1.1066 },  // G/H(底边目标画布 y≈455)
-  { z: -1.719, aisle: 6.026, offX: -0.101, sL: 1.0279, sR: 1.0134 }, // E/F
-  { z: 9.421, aisle: 6.702, offX: -0.038, sL: 1.0189, sR: 1.0163 }, // C/D
-  { z: 20.622, aisle: 7.369, offX: 0.186, sL: 1.0274, sR: 1.0519 },  // A/B
+  { z: -14.65, aisle: 7.62, offX: 0.016, sL: 1, sR: 1 },  // G/H(底边目标画布 y≈455)
+  { z: -1.719, aisle: 6.026, offX: -0.101, sL: 1, sR: 1 }, // E/F
+  { z: 9.421, aisle: 6.702, offX: -0.038, sL: 1, sR: 1 }, // C/D
+  { z: 20.622, aisle: 7.369, offX: 0.186, sL: 1, sR: 1 },  // A/B
 ];
 
 // 排内某列的机柜中心 x:col 0=左列(-1) / 1=右列(+1)
@@ -115,10 +115,23 @@ function makeGlowGradientTexture() {
   c.height = 128;
   const g = c.getContext("2d");
   const grad = g.createLinearGradient(0, 0, 0, 128);
-  grad.addColorStop(0, "#FF8A50");
-  grad.addColorStop(0.5, "#C86BFA");
-  grad.addColorStop(1, "#6A8CFF");
+  grad.addColorStop(0, "#F89E21");
+  grad.addColorStop(0.612483412, "rgba(210,112,225,0.9)");
+  grad.addColorStop(1, "#77C1EE");
   g.fillStyle = grad;
+  g.fillRect(0, 0, 8, 128);
+  return new THREE.CanvasTexture(c);
+}
+
+// S01 95294: 故障红从底部实色向顶部透明渐变，保留柜体细节。
+function makeFaultGradientTexture() {
+  const c = document.createElement("canvas");
+  c.width = 8; c.height = 128;
+  const g = c.getContext("2d");
+  const gradient = g.createLinearGradient(0, 0, 0, 128);
+  gradient.addColorStop(0, "rgba(129,37,41,0)");
+  gradient.addColorStop(1, "rgba(246,88,95,1)");
+  g.fillStyle = gradient;
   g.fillRect(0, 0, 8, 128);
   return new THREE.CanvasTexture(c);
 }
@@ -197,8 +210,15 @@ function createScene(THREE, container, overlayApi) {
   };
   updateCamera();
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(window.devicePixelRatio || 1);
+  // 双显卡 Mac 优先低功耗设备；MSAA 不可用时仍保留实时 WebGL。
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
+  } catch (initialError) {
+    console.warn("3D 标准上下文创建失败，尝试无抗锯齿 WebGL", initialError);
+    renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: "low-power" });
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   container.appendChild(renderer.domElement);
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.8));
@@ -265,14 +285,15 @@ function createScene(THREE, container, overlayApi) {
   }
 
   const glowTex = makeGlowGradientTexture();
-  disposables.tex.push(glowTex);
-  const overlayGeo = new THREE.BoxGeometry(CAB.w + 0.06, CAB.h + 0.06, CAB.d + 0.06);
+  const faultTex = makeFaultGradientTexture();
+  disposables.tex.push(glowTex, faultTex);
+  const overlayGeo = new THREE.BoxGeometry(CAB.w + 0.002, CAB.h + 0.002, CAB.d + 0.002);
   disposables.geo.push(overlayGeo);
   const glowMat = new THREE.MeshBasicMaterial({
-    map: glowTex, transparent: true, opacity: 0.75, depthWrite: false,
+    map: glowTex, transparent: true, opacity: 0.85, depthWrite: false,
   });
   const faultMat = new THREE.MeshBasicMaterial({
-    color: 0xf0454a, transparent: true, opacity: 0.7, depthWrite: false,
+    map: faultTex, transparent: true, opacity: 1, depthWrite: false,
   });
   disposables.mat.push(glowMat, faultMat);
   for (const cab of cabinets) {
@@ -442,62 +463,57 @@ function createScene(THREE, container, overlayApi) {
     return { tex, worldW, worldH };
   }
 
-  // 2c. 告警气泡 Sprite 纹理(A-08 渐变三角 / pin 红圆三角 + 手掌徽标)
-  function makeBadgeTexture(type) {
+  // S01 原稿素材合成为场景 Sprite；不修改静态降级图片。
+  let badgeTexturesDisposed = false;
+  function makeBadgeTexture(type, aggregate, impacting = false) {
     const c = document.createElement("canvas");
-    c.width = 128; c.height = 128;
+    c.width = 256; c.height = 256;
     const g = c.getContext("2d");
-    const cx = 64, r = 58;
-    // 白底圆 + 阴影
-    g.shadowColor = "rgba(15,17,21,0.3)";
-    g.shadowBlur = 10;
-    g.fillStyle = "#FFFFFF";
-    g.beginPath(); g.arc(cx, 64, r, 0, Math.PI * 2); g.fill();
-    g.shadowBlur = 0;
-    if (type === "glow") {
-      const grad = g.createLinearGradient(40, 40, 88, 88);
-      grad.addColorStop(0, "#C86BFA");
-      grad.addColorStop(1, "#6A8CFF");
-      g.fillStyle = grad;
-      g.strokeStyle = grad;
-      g.lineWidth = 6;
-      tri(g, 64, 34, 34);
-      // A-08 无手掌徽标
-    } else {
-      g.fillStyle = "#F0454A";
-      g.beginPath(); g.arc(cx, 66, 30, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#FFFFFF";
-      tri(g, 64, 47, 22);
-      // 右上红底白手掌徽标(直径为气泡 0.6)
-      const br = r * 0.6 / 2;
-      const bx = cx + r * 0.72, by = 64 - r * 0.72;
-      g.fillStyle = "#F0454A";
-      g.beginPath(); g.arc(bx, by, br, 0, Math.PI * 2); g.fill();
-      g.strokeStyle = "#FFFFFF"; g.lineWidth = 4;
-      g.stroke();
-      g.fillStyle = "#FFFFFF";
-      drawHand(g, bx, by, br * 1.1);
-    }
+    g.scale(4, 4);
     const tex = new THREE.CanvasTexture(c);
+    const specs = type === "glow"
+      ? [["auto.svg", 6, 6, 51.416, 51.416]]
+      : [["fault-pin.svg", 12, 24, 24, 28.0542],
+         ["fault-fill.svg", 17.04, 29.109, 13.9201, 12.5758],
+         ["fault-exclamation.svg", 23.419, 32.301, 1.166, 6.738],
+         aggregate
+           ? ["manual-count.svg", 30.04, 17.614, 10.5725, 12]
+           : impacting
+             ? ["manual-count.svg", 30.04, 17.614, 10.5725, 12]
+             : ["manual.svg", 24.212, 11.675, 24, 24]];
+    if (impacting) specs.push(["lg-impact.svg", 44, 16.614, 14, 14]);
+    Promise.all(specs.map(([file, ...rect]) => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve({ img, rect });
+      img.onerror = () => reject(new Error(`机柜气泡素材加载失败: ${file}`));
+      img.src = `assets/uploads/s01/${file}`;
+    }))).then(layers => {
+      if (badgeTexturesDisposed) return;
+      layers.forEach(({ img, rect }, index) => {
+        if ((aggregate || impacting) && type !== "glow" && index === 3) {
+          // Figma 2972:97365 的白底红边胶囊；不用含画板背景的 PNG 导出。
+          g.fillStyle = "#FFFFFF";
+          g.strokeStyle = "#E02128";
+          g.lineWidth = 0.833;
+          roundRect(g, 26.212 + 0.4165, 13.614 + 0.4165, (impacting ? 36 : 32) - 0.833, 20 - 0.833, 10);
+          g.fill();
+          g.stroke();
+        }
+        g.drawImage(img, ...rect);
+      });
+      if (aggregate && type !== "glow") {
+        g.fillStyle = "#E02128";
+        g.font = `500 12px ${FONT}`;
+        // 按实际字形边界居中，不使用受字体行高影响的 top 基线。
+        g.textBaseline = "alphabetic";
+        const label = String(aggregate);
+        const bounds = g.measureText(label);
+        const baseline = 23.614 + (bounds.actualBoundingBoxAscent - bounds.actualBoundingBoxDescent) / 2;
+        g.fillText(label, 45.212, baseline);
+      }
+      tex.needsUpdate = true;
+    }).catch(error => console.error(error));
     return tex;
-  }
-  function tri(g, cx, top, half) {
-    g.beginPath();
-    g.moveTo(cx, top);
-    g.lineTo(cx + half * 0.92, top + half * 1.6);
-    g.lineTo(cx - half * 0.92, top + half * 1.6);
-    g.closePath();
-    g.fill();
-  }
-  function drawHand(g, cx, cy, s) {
-    // 简化手掌:4 指 + 掌
-    g.save();
-    g.translate(cx, cy);
-    g.scale(s, s);
-    g.fillStyle = "#FFFFFF";
-    for (let i = 0; i < 4; i++) roundRect(g, -0.5 + i * 0.28, -0.62, 0.2, 0.62, 0.1), g.fill();
-    roundRect(g, -0.52, -0.1, 1.04, 0.68, 0.16); g.fill();
-    g.restore();
   }
 
   // 组装:编号贴地 / 铭牌竖立 / 气泡 Sprite
@@ -543,14 +559,84 @@ function createScene(THREE, container, overlayApi) {
       const [pl, numStr] = key.split("-");
       if (pl !== pod.id) continue;
       const idx = parseInt(numStr, 10);
-      const tex2 = makeBadgeTexture(type);
-      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex2, transparent: true, depthTest: true }));
-      sp.scale.set(1.1, 1.1, 1);
-      sp.position.set(rackX(pod.row, pod.col, idx), CAB.h + 0.6, PER_ROW[pod.row].z);
+      const tex2 = makeBadgeTexture(type, key === "D-8" ? 2 : 0, key === "A-15");
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex2, transparent: true, depthTest: true, depthWrite: false }));
+      sp.userData.eventKey = key;
+      sp.userData.resolved = false;
+      sp.scale.set(2.9333, 2.9333, 1);
+      sp.center.set(type === "glow" ? 0.5 : 24 / 64, type === "glow" ? 0.25 : 12 / 64);
+      sp.position.set(rackX(pod.row, pod.col, idx), CAB.h + 0.02, PER_ROW[pod.row].z);
       scene.add(sp);
       disposables.mat.push(sp.material);
       disposables.tex.push(tex2);
     }
+  }
+
+  // Record row-owned meshes before transient hover/selection geometry is created.
+  const rowVisuals = scene.children.filter(n => n.isMesh || n.isSprite).map(node => {
+    const pod = PODS.reduce((best, p) => {
+      const dist = Math.abs(node.position.z - PER_ROW[p.row].z) * 3 + Math.abs(node.position.x - podCenterX(p.row,p.col));
+      return !best || dist < best.dist ? {id:p.id,dist} : best;
+    }, null).id;
+    return {node, pod, y:node.position.y, scaleY:node.scale.y, original:node.material};
+  });
+  let flight = null, cabinetHeld = false, returnPose = null;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const flightTarget = new THREE.Vector3();
+  let heldTarget = null;
+  function prepareFlightMaterials() {
+    const cache = new Map();
+    for(const item of rowVisuals) {
+      const copy = material => {
+        const key = `${item.pod}:${material.uuid}`;
+        if(!cache.has(key)) { const m=material.clone(); m.transparent=true; cache.set(key,m); disposables.mat.push(m); }
+        return cache.get(key);
+      };
+      item.node.userData.flightOriginalMaterial = item.original;
+      item.node.material = Array.isArray(item.original) ? item.original.map(copy) : copy(item.original);
+      item.mats=Array.isArray(item.node.material)?item.node.material:[item.node.material];
+      item.originals=Array.isArray(item.original)?item.original:[item.original];
+    }
+  }
+  function restoreFlightMaterials() {
+    for(const item of rowVisuals) {
+      item.node.material=item.original;
+      item.node.position.y=item.y; item.node.scale.y=item.scaleY;
+      for(let i=0;i<item.mats.length;i++) item.mats[i].opacity=item.originals[i].opacity;
+    }
+  }
+  // Allocate and compile once while loading, never at the first click or handoff.
+  prepareFlightMaterials();
+  renderer.compile(scene,camera);
+  restoreFlightMaterials();
+  renderer.compile(scene,camera);
+  function enterCabinet(cab) {
+    if(flight || cabinetHeld || !cab) return;
+    hideTip(); setHover(null); setSelected(null);
+    const pod=PODS.find(p=>p.id===cab.userData.pod);
+    const f=viewH/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov)/2));
+    // S02 body bounds, in the normal viewport: x=3.91, y=164.24, w=1345.07, h=332.978.
+    const bodyW=viewW*(1345.07/1356);
+    const d=POD_WIDTH*f/bodyW;
+    const heightScale=332.978/(1345.07*CAB.h/POD_WIDTH);
+    const z=PER_ROW[pod.row].z+CAB.d/2;
+    const x=podCenterX(pod.row,pod.col)-((3.91+1345.07/2)/1356-.5)*viewW*d/f;
+    const y=CAB.h*heightScale/2+((164.24+332.978/2)/647-.5)*viewH*d/f;
+    returnPose={pos:camera.position.clone(),target:lookAt.clone(),view:{...view}};
+    // Only objects that actually fade use the prepared transparent materials.
+    // The selected solid cabinet keeps its original opaque depth ordering.
+    for(const item of rowVisuals) {
+      const fading=item.pod!==pod.id || item.node.isSprite || item.node.geometry?.type === "PlaneGeometry";
+      item.node.material=fading ? (Array.isArray(item.original)?item.mats:item.mats[0]) : item.original;
+    }
+    heldTarget=new THREE.Vector3(x,y,z);
+    flight={pod:pod.id,from:camera.position.clone(),fromTarget:lookAt.clone(),to:new THREE.Vector3(x,y,z+d),target:new THREE.Vector3(x,y,z),start:performance.now(),duration:reducedMotion?120:1500,heightScale,returning:false,sent:false};
+  }
+  function returnFromCabinet() {
+    if(!returnPose) return;
+    const targetNow=heldTarget.clone();
+    flight={pod:flight?.pod || cabinetHeld,from:camera.position.clone(),fromTarget:targetNow,to:returnPose.pos.clone(),target:returnPose.target.clone(),start:performance.now()+ (reducedMotion?120:320),duration:reducedMotion?120:1450,heightScale:332.978/(1345.07*CAB.h/POD_WIDTH),returning:true};
+    cabinetHeld=false;
   }
 
   // —— 调试:输出 8 排 01/20 机柜正面底边中点(主页面画布坐标) ——
@@ -770,12 +856,14 @@ function createScene(THREE, container, overlayApi) {
   let lastY = 0;
   let moved = 0;
   const onPointerDown = (e) => {
+    if(flight || cabinetHeld || e.button !== 0) return;
     dragging = true;
     moved = 0;
     downX = lastX = e.clientX;
     downY = lastY = e.clientY;
   };
   const onPointerMove = (e) => {
+    if(flight || cabinetHeld) return;
     if (dragging) {
       const dx = e.clientX - lastX;
       const dy = e.clientY - lastY;
@@ -803,10 +891,13 @@ function createScene(THREE, container, overlayApi) {
   const rectLeft = () => canvas.getBoundingClientRect().left;
   const rectTop = () => canvas.getBoundingClientRect().top;
   const onPointerUp = (e) => {
+    if(!dragging || flight || cabinetHeld) return;
     dragging = false;
     if (moved < 4) {
       const cab = pick(e.clientX, e.clientY);
-      setSelected(cab === selectedCab ? null : cab);
+      // The referenced Labtour and S02 story currently implement SuperPod A.
+      if(cab?.userData.pod === "A") enterCabinet(cab);
+      else setSelected(cab === selectedCab ? null : cab);
     }
   };
   const setZoom = (z, notify) => {
@@ -815,6 +906,7 @@ function createScene(THREE, container, overlayApi) {
   };
   const onWheel = (e) => {
     e.preventDefault();
+    if(flight || cabinetHeld) return;
     // 滚轮向上(deltaY<0)= 放大
     setZoom(goal.zoom * (e.deltaY > 0 ? 0.9 : 1.1), true);
   };
@@ -833,7 +925,16 @@ function createScene(THREE, container, overlayApi) {
   let breathUntil = 0; // focusCabinet 呼吸截止时间戳
   const onMessage = (e) => {
     const msg = e.data || {};
-    if (msg.type === "focusCabinet" && typeof msg.id === "string") {
+    if(msg.type === "cabinetReturn" && e.source === window.parent) {
+      returnFromCabinet();
+    } else if (msg.type === "impactFilter") {
+      if (e.source !== window.parent) return;
+      for (const child of scene.children) {
+        if (child.isSprite && child.userData.eventKey) {
+          child.visible = !child.userData.resolved && (!msg.enabled || child.userData.eventKey === "D-8");
+        }
+      }
+    } else if (msg.type === "focusCabinet" && typeof msg.id === "string") {
       const m = msg.id.match(/^([A-H])-(\d{1,2})$/);
       if (!m) return;
       const cab = cabinets.find(
@@ -866,7 +967,7 @@ function createScene(THREE, container, overlayApi) {
       if (!cab) return;
       // 覆盖盒定位到该柜的 overlay 隐藏
       for (const child of scene.children) {
-        if (child.isMesh && child.material === faultMat && child.position.distanceTo(cab.position) < 0.1) {
+        if (child.isMesh && (child.material === faultMat || child.userData.flightOriginalMaterial === faultMat) && child.position.distanceTo(cab.position) < 0.1) {
           child.visible = false;
         }
       }
@@ -888,6 +989,7 @@ function createScene(THREE, container, overlayApi) {
       // 相关 Sprite 气泡(D-08 pin)隐藏
       for (const child of scene.children) {
         if (child.isSprite && Math.abs(child.position.x - cab.position.x) < 0.5 && Math.abs(child.position.z - cab.position.z) < 0.5) {
+          child.userData.resolved = true;
           child.visible = false;
         }
       }
@@ -914,7 +1016,33 @@ function createScene(THREE, container, overlayApi) {
     lookAt.x += (lookAtGoal.x - lookAt.x) * DAMP;
     lookAt.y += (lookAtGoal.y - lookAt.y) * DAMP;
     lookAt.z += (lookAtGoal.z - lookAt.z) * DAMP;
-    applyView();
+    if(!flight && !cabinetHeld) applyView();
+    if(flight) {
+      const t=Math.max(0,Math.min(1,(performance.now()-flight.start)/flight.duration));
+      const eased=t*t*t*(t*(t*6-15)+10); // continuous acceleration at both ends
+      camera.position.lerpVectors(flight.from,flight.to,eased);
+      camera.lookAt(flightTarget.lerpVectors(flight.fromTarget,flight.target,eased));
+      const collapse=flight.returning ? 1-eased : eased;
+      for(const item of rowVisuals) {
+        const other=item.pod!==flight.pod;
+        const yScale=other?1:1+(flight.heightScale-1)*collapse;
+        item.node.scale.y=item.scaleY*yScale;
+        item.node.position.y=item.y*yScale-(other?collapse*(CAB.h+1.2):0);
+        const fade=(other || item.node.isSprite || item.node.geometry?.type === "PlaneGeometry") ? 1-collapse : 1;
+        for(let i=0;i<item.mats.length;i++) item.mats[i].opacity=item.originals[i].opacity*fade;
+      }
+      if(!flight.returning && t>=1 && !flight.sent) {
+        flight.sent=true;
+        window.parent.postMessage({type:"cabinetEnter",pod:flight.pod},"*");
+      }
+      if(t>=1) {
+        if(flight.returning) {
+          restoreFlightMaterials(); Object.assign(view,returnPose.view); Object.assign(goal,returnPose.view);
+          lookAt.copy(returnPose.target);lookAtGoal.copy(returnPose.target);returnPose=null;
+        } else cabinetHeld=flight.pod;
+        flight=null;
+      }
+    }
     // zoomChanged 通知(取整后变化才发)
     const zPct = Math.round(view.zoom * 100);
     if (zPct !== lastZoomSent) {
@@ -970,6 +1098,8 @@ function createScene(THREE, container, overlayApi) {
   animate();
 
   return () => {
+    restoreFlightMaterials();
+    badgeTexturesDisposed = true;
     cancelAnimationFrame(frameId);
     resizeObserver.disconnect();
     canvas.removeEventListener("pointerdown", onPointerDown);
@@ -989,7 +1119,8 @@ function createScene(THREE, container, overlayApi) {
 
 // 挂载 3D 场景到 containerRef,返回 { status, overlayApi }
 export function useThreeScene(containerRef) {
-  const [status, setStatus] = useState("ready");
+  const [status, setStatus] = useState("loading");
+  const [attempt, setAttempt] = useState(0);
   const overlayApi = useRef({
     attach: () => {},
     detach: () => {},
@@ -1000,9 +1131,28 @@ export function useThreeScene(containerRef) {
       setStatus("error");
       return undefined;
     }
-    const cleanup = createScene(THREE, containerRef.current, overlayApi);
-    return cleanup;
-  }, []);
+    let cleanup;
+    let canvas;
+    const lost = (event) => { event.preventDefault(); setStatus("error"); };
+    const restored = () => setStatus("ready");
+    try {
+      cleanup = createScene(THREE, containerRef.current, overlayApi);
+      canvas = containerRef.current.querySelector("canvas");
+      canvas?.addEventListener("webglcontextlost", lost);
+      canvas?.addEventListener("webglcontextrestored", restored);
+      setStatus("ready");
+      console.info("机柜实时 3D 初始化成功");
+    } catch (error) {
+      // WebGL 不可用时保留 React 页面，展示静态预览和重试入口。
+      console.warn("机柜 3D 初始化失败", error);
+      setStatus("error");
+    }
+    return () => {
+      canvas?.removeEventListener("webglcontextlost", lost);
+      canvas?.removeEventListener("webglcontextrestored", restored);
+      cleanup?.();
+    };
+  }, [attempt]);
 
-  return { status, overlayApi };
+  return { status, overlayApi, retry: () => setAttempt(value => value + 1) };
 }

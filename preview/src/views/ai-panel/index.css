@@ -228,13 +228,18 @@
   position: absolute;
   width: 204px;
   height: 30px;
+  overflow: hidden;
   border-radius: 15px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 6px rgba(70, 90, 140, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .12);
   pointer-events: none;
   transition: left 200ms ease-out;
-  box-sizing: border-box;
+}
+.ai-seg-pill > img {
+  position: absolute;
+  left: -8px;
+  top: -4px;
+  width: 220px;
+  height: 46px;
 }
 
 .ai-seg-hot {
@@ -568,3 +573,7 @@
   background: #dfdfdf;
   pointer-events: none;
 }
+
+.ai-event-list{position:absolute;left:28px;top:732px;width:434px;height:216px;overflow-y:auto;display:flex;flex-direction:column;scrollbar-width:thin}
+.ai-impact-tag{position:absolute;left:32px;top:24px;padding:0 5px;border-radius:3px;background:#fff0dc;color:#ed8000;font-size:12px;line-height:20px}
+.ai-events-empty{padding:50px 12px;text-align:center;color:#939393;font-size:14px}

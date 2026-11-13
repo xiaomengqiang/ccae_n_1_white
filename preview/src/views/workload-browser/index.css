@@ -5,16 +5,14 @@
   top: 250px;
   width: 1332px;
   z-index: 30;
-  animation: wl-in 250ms ease-out 80ms both;
+  animation: wl-in 360ms cubic-bezier(.22,1,.36,1) both;
 }
 
 @keyframes wl-in {
   from {
-    opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(16px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
@@ -35,7 +33,8 @@
 
 .wl-sort {
   width: 128px;
-  height: 40px;
+  height: 32px;
+  padding: 0 4px;
   border: none;
   background: transparent;
   color: #191919;
@@ -151,35 +150,12 @@
   top: -2px;
   height: 44px;
   border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.96);
+  border: 0.8px solid rgba(255, 255, 255, 0.96);
   box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.44), 0 2px 3.5px rgba(0, 0, 0, 0.05);
-  background: rgba(236, 236, 236, 0.7);
+  background: linear-gradient(180deg,rgba(225,225,225,.7),rgba(255,255,255,.45) 50%,rgba(236,236,236,.6));
   pointer-events: none;
   transition: left 250ms ease-out, width 250ms ease-out;
   z-index: 0; /* 低于短条:仅作背后浅色高光,不模糊短条 */
-}
-
-/* 翻页按钮 */
-.wl-page-btns {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.wl-page-btn {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #dfdfdf;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #191919;
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.wl-page-btn:hover {
-  background: #f5f7fa;
 }
 
 /* —— 卡片列表(555.5,324 起,可视到 y905) —— */
@@ -415,3 +391,46 @@
   color: #777;
   margin-left: 2px;
 }
+
+.wl-sort-caret{width:16px;height:16px;display:flex;align-items:center;justify-content:center}
+.wl-sort-caret img{width:8.992px;height:4.864px;opacity:.9}
+
+/* 与深色交互稿共用对象浏览语义，保留浅色短条和玻璃范围框。 */
+.wl-bar { position:relative; height:40px; padding:0; border:0; background:transparent; opacity:1; overflow:hidden; transition:flex-basis .22s ease; }
+.wl-bar::before { content:""; position:absolute; left:0; right:0; top:16px; height:8px; border-radius:3px; background:currentColor; opacity:.28; }
+.wl-bar.wl-bar-visible { opacity:1; }
+.wl-bar-visible::before { opacity:.82; }
+.wl-bar:hover::before { opacity:1; }
+.wl-bar.wl-bar-expanded { flex:0 0 270px; display:flex; align-items:center; gap:8px; padding:4px 10px; border:1px solid #c8dff7; border-bottom:3px solid currentColor; border-radius:6px; background:#f5f9ff; }
+.wl-bar-expanded::before { display:none; }
+.wl-rail-icon,.wl-rail-copy { display:none; }
+.wl-bar-expanded .wl-rail-icon { display:block; width:22px; height:22px; flex:none; }
+.wl-bar-expanded .wl-rail-copy { display:block; min-width:0; text-align:left; color:#191919; }
+.wl-rail-copy strong { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:12px; font-weight:500; }
+.wl-rail-copy small { display:flex; gap:8px; align-items:center; font-size:10px; line-height:16px; color:#666; }
+.wl-rail-copy em { font-style:normal; color:#c76207; background:#fff0dc; border-radius:3px; padding:0 4px; }
+.wl-rail-caption { position:absolute; top:43px; left:3px; right:3px; display:flex; justify-content:space-between; font-size:10px; line-height:14px; color:#777; pointer-events:none; }
+.wl-reverse { flex:none; border:0; border-radius:4px; background:transparent; color:#666; width:24px; height:28px; font-size:18px; cursor:pointer; }
+.wl-reverse:hover,.wl-reverse[aria-pressed="true"] { color:#0067d1; background:#edf5ff; }
+.wl-range { position:absolute; width:1px; height:1px; opacity:0; }
+.wl-bars-wrap:has(.wl-range:focus-visible) { outline:2px solid #0067d1; outline-offset:2px; border-radius:6px; }
+.wl-bar:focus-visible,.wl-reverse:focus-visible { outline:2px solid #0067d1; outline-offset:-2px; }
+.wl-list { position:relative; }
+.wl-grid { padding-bottom:65px; }
+@media (prefers-reduced-motion: reduce) { .wl-bar,.wl-glass { transition:none; } }
+
+/* 异常对象默认显示图标与首字，悬浮时再展开完整信息。 */
+.wl-rail-short { display:none; font-size:14px; color:#191919; }
+.wl-bar-abnormal:not(.wl-bar-expanded) { display:flex; align-items:center; justify-content:center; gap:5px; min-width:52px; height:38px; background:#fff5e8; border-bottom:3px solid currentColor; border-radius:6px; }
+.wl-bar-abnormal:not(.wl-bar-expanded)::before { display:none; }
+.wl-bar-abnormal:not(.wl-bar-expanded) .wl-rail-icon { display:block; width:18px; height:18px; }
+.wl-bar-abnormal:not(.wl-bar-expanded) .wl-rail-short { display:block; }
+
+.wl-rail-copy .wl-rail-status-degrade { color:#C76207; background:#FDE2BD; }
+.wl-rail-copy .wl-rail-manual,.wl-rail-copy .wl-rail-status-interrupt,.wl-rail-copy .wl-rail-status-stall { color:#E02128; background:#FEE7E8; }
+.wl-rail-copy .wl-rail-status-normal { color:#09AA71; background:#E7FBF2; }
+.wl-rail-copy .wl-rail-auto { color:#0067D1; background:#E6F2FD; }
+.wl-rail-hand { position:absolute; top:1px; right:2px; width:12px; height:12px; }
+.wl-bar-expanded .wl-rail-hand { display:none; }
+
+@media (prefers-reduced-motion: reduce) { .wl-root { animation:none; } }

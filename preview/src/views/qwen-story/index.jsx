@@ -9,12 +9,15 @@ import { evidence } from "../../mock/qwen.js";
 import "./index.css";
 import "./figma-layers.css";
 // Self-contained story. The homepage can mount this component with onBack.
-export default function QwenStory({ onBack }) {
+export default function QwenStory({ onBack, onResolved, onStageChange }) {
  const [stage,setStage]=useState(6),[expanded,setExpanded]=useState([false,false,false,false,false,true]);
  const [selected,setSelected]=useState(null),[documentName,setDocumentName]=useState(null),[overview,setOverview]=useState(false);
  const [draft,setDraft]=useState(""),[answer,setAnswer]=useState(""),[full,setFull]=useState(false);
- const [scale,setScale]=useState(1); const timers=useRef([]),canvas=useRef(null),authorized=useRef(false);
+ // 首次渲染即使用视口比例，避免先显示原尺寸再缩小。
+ const [scale,setScale]=useState(()=>Math.min(window.innerWidth/1920,window.innerHeight/1080)); const timers=useRef([]),canvas=useRef(null),authorized=useRef(false);
  useEffect(()=>{const resize=()=>setScale(Math.min(window.innerWidth/1920,window.innerHeight/1080));resize();window.addEventListener("resize",resize);return()=>{window.removeEventListener("resize",resize);timers.current.forEach(clearTimeout);};},[]);
+ useEffect(()=>{onStageChange?.(stage);},[stage,onStageChange]);
+ useEffect(()=>{if(stage===9)onResolved?.();},[stage]);
  function authorize(){if(authorized.current||stage!==6)return;authorized.current=true;setSelected(null);setStage(7);timers.current.push(setTimeout(()=>setStage(8),1800),setTimeout(()=>setStage(9),3600));}
  function reset(){timers.current.forEach(clearTimeout);timers.current=[];authorized.current=false;setStage(6);setSelected(null);setExpanded([false,false,false,false,false,true]);setAnswer("");setDraft("");setOverview(false);}
  function select(second){setSelected(second);if(second!==null&&second>=6){const section=second>=72?5:1;setExpanded(v=>v.map((b,i)=>i===section?true:b));}}

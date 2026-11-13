@@ -18,7 +18,7 @@ import "./index.css";
 const S01 = "./assets/uploads/s01";
 
 // 通用文字:绝对定位 + 字号/行高/字重/颜色(字重 Regular=400 Medium=500 Bold=700)
-function T({ x, y, size, lh, weight = 400, color = "#191919", width, wrap, gradient, style, children }) {
+function T({ x, y, size, lh, weight = 400, color = "#191919", width, wrap, gradient, style, title, children }) {
   const base = { left: x, top: y, fontSize: size, lineHeight: `${lh}px`, fontWeight: weight, color };
   if (width) base.width = width;
   if (wrap) base.whiteSpace = "normal";
@@ -29,7 +29,7 @@ function T({ x, y, size, lh, weight = 400, color = "#191919", width, wrap, gradi
     base.color = "transparent";
   }
   return (
-    <span className="ai-t" style={{ ...base, ...style }}>
+    <span className="ai-t" title={title} style={{ ...base, ...style }}>
       {children}
     </span>
   );
@@ -57,7 +57,7 @@ function focusCabinet(id) {
 }
 
 export default function AiPanel() {
-  const { openDetail, resolved } = useApp();
+  const { openDetail, resolved, qwenStage, faultCount, bizOnly, setBizOnly } = useApp();
   const [faultStat, hazardStat] = faultCard.stats;
   const [mAvail, mReq] = faultCard.metrics;
   const [mMedium, mLarge] = energyCard.metrics;
@@ -65,7 +65,6 @@ export default function AiPanel() {
 
   // —— 交互状态(默认值与静态截图一致) ——
   const [seg, setSeg] = useState("manual");           // 分段:manual | auto
-  const [bizOnly, setBizOnly] = useState(false);       // 仅显示影响业务事件
   const [selectedEvt, setSelectedEvt] = useState(null);// 选中事件 key
   const [drawerOpen, setDrawerOpen] = useState(false); // 查看全部抽屉
   const [range, setRange] = useState(aiPanelMeta.timeRange);
@@ -111,7 +110,15 @@ export default function AiPanel() {
     }, 600);
   };
 
-  const visibleList = seg === "manual" ? agentEvents.list : agentEvents.autoList;
+  const processing = qwenStage === 7 || qwenStage === 8;
+  const allEvents = agentEvents.list.map(ev => ev.storyId === "qwen" ? {
+    ...ev, desc: processing ? (qwenStage === 7 ? "已人工授权，正在将 hinic3 网卡驱动从 V11.8 升级至 V13.1，服务尚未恢复" : "驱动已升级至 V13.1，正在核验节点、D-08 实例及 Qwen-1.5B 服务健康") : ev.desc, status: resolved ? "已闭环" : processing ? "自动处理中" : "待人工",
+    title: resolved ? "Qwen-1.5B服务已恢复，网卡故障已闭环" : processing ? (qwenStage === 7 ? "人工已授权，启动网卡驱动升级" : "驱动已升级，启动健康核验") : ev.title,
+  } : {...ev, status:"待人工"}).sort((a,b)=>b.time.localeCompare(a.time));
+  const filteredEvents = allEvents.filter(ev => !bizOnly || ev.affectsBusiness);
+  const manualEvents = filteredEvents.filter(ev => ev.status === "待人工");
+  const autoEvents = filteredEvents.filter(ev => ev.status === "自动处理中");
+  const visibleList = seg === "manual" ? manualEvents : autoEvents;
 
   return (
     <aside className="ai-panel">
@@ -122,13 +129,11 @@ export default function AiPanel() {
       <Art src="spark-job@2x.png" x={45} y={402} w={178} h={18} />
       <Art src="spark-req@2x.png" x={264} y={405} w={178} h={18} />
       <Art src="spark-energy@2x.png" x={41} y={530} w={404} h={76} />
-      {/* 分段轨道(无胶囊)+ CSS 选中胶囊 */}
-      <Art src="segmented-track@2x.png" x={17} y={676} w={448} h={46} />
-      <span
-        className="ai-seg-pill"
-        style={{ left: seg === "manual" ? 27 : 251, top: 684 }}
-        aria-hidden="true"
-      />
+      {/* Figma 2972:103743 原轨道与选中胶囊；导出胶囊左侧含 8px、顶部含 4px 的透明阴影边界。 */}
+      <Art src="segmented-figma-track.svg" x={19.5542} y={680.5} w={444} h={38} />
+      <span className="ai-seg-pill" style={{ left: seg === "manual" ? 23.5542 : 243.5542, top: 684.5 }} aria-hidden="true">
+        <img src={`${S01}/segmented-figma-pill.png`} alt="" />
+      </span>
       <Art src="input-box@2x.png" x={8} y={952} w={468} h={72} />
 
       {/* —— 文字层 —— */}
@@ -188,15 +193,15 @@ export default function AiPanel() {
             "linear-gradient(90deg,#777 0%,#777 28.93%,#AD66FF 44.57%,#FF666B 55.45%,#FF9466 66.34%,#777 80.94%)",
         }}
       >
-        <div style={{ whiteSpace: "nowrap" }}>正在守护8个超节点，8192卡，13个训练作业，16个推理服务，业务</div>
-        <div style={{ whiteSpace: "nowrap" }}>均正常。目前共2项待人工处理的资源事件需关注</div>
+        <div style={{ whiteSpace: "nowrap" }}>正在守护8个超节点，8192卡，13个训练作业，16个推理服务，</div>
+        <div style={{ whiteSpace: "nowrap" }}>{resolved ? "业务均正常。" : "Qwen-1.5B服务劣化。"}目前共{allEvents.filter(ev=>ev.status === "待人工").length}项待人工处理事件需关注</div>
       </div>
 
       {/* 故障与隐患卡片(右上 ^ 箭头热区:hover 圆底) */}
       <T x={85} y={291} size={14} lh={22} weight={500}>{faultCard.title}</T>
       <button type="button" className="ai-fold-hot" style={{ left: 414, top: 282 }} title="收起" />
       <T x={85} y={315} size={12} lh={20} weight={500} color="#777">
-        {faultStat.label} <b className="c-red">{faultStat.num}</b>{faultStat.rest}
+        {faultStat.label} <b className="c-red">{faultCount}</b>{faultStat.rest}
       </T>
       <T x={178} y={315} size={12} lh={20} weight={500} color="#777">
         {hazardStat.label} <b className="c-gray">{hazardStat.num}</b>{hazardStat.rest}
@@ -224,6 +229,9 @@ export default function AiPanel() {
       <T x={259.37} y={530} size={12} lh={20} color="#777">{mLarge.label}</T>
       <T x={259.36} y={554} size={24} lh={32} weight={500}>{mLarge.value}</T>
       <T x={311.37} y={564} size={12} lh={20} color="#777">{mLarge.unit}</T>
+
+      <Art src="card-section-divider.svg" x={38} y={343.5} w={405} h={1} />
+      <Art src="card-section-divider.svg" x={38} y={515.5} w={405} h={1} />
 
       {/* 智能体事件标题 + 复选框 + 查看全部 */}
       <T x={28} y={648} size={16} lh={24} weight={500}>{agentEvents.title}</T>
@@ -256,27 +264,27 @@ export default function AiPanel() {
       </a>
 
       {/* 分段控件文字(选中 #191919 Medium / 未选中 #777)+ 点击切换 */}
-      <button type="button" className="ai-seg-hot" style={{ left: 27, top: 684, width: 204, height: 30 }} onClick={() => setSeg("manual")}>
-        <T x={55.05} y={4.87} size={14} lh={22} weight={500} color={seg === "manual" ? "#191919" : "#777"}>{segManual.label}</T>
-        <T x={133.06} y={4.87} size={14} lh={22} weight={700} color={seg === "manual" ? "#E02128" : "#777"}>{resolved ? segManual.count - 1 : segManual.count}</T>
+      <button type="button" className="ai-seg-hot" aria-pressed={seg === "manual"} style={{ left: 23.5542, top: 684.5, width: 204, height: 30 }} onClick={() => setSeg("manual")}>
+        <T x={58.5} y={4.373} size={14} lh={22} weight={500} color={seg === "manual" ? "#191919" : "#777"}>{segManual.label}</T>
+        <T x={136.5022} y={4.372} size={14} lh={22} weight={700} color={seg === "manual" ? "#E02128" : "#777"}>{manualEvents.length}</T>
       </button>
-      <button type="button" className="ai-seg-hot" style={{ left: 251, top: 684, width: 204, height: 30 }} onClick={() => setSeg("auto")}>
-        <T x={55.05} y={4.5} size={14} lh={22} weight={500} color={seg === "auto" ? "#191919" : "#777"}>{segAuto.label}</T>
-        <T x={129.05} y={4.5} size={14} lh={22} weight={700} color={seg === "auto" ? "#191919" : "#777"}>{segAuto.count}</T>
+      <button type="button" className="ai-seg-hot" aria-pressed={seg === "auto"} style={{ left: 243.5542, top: 684.5, width: 204, height: 30 }} onClick={() => setSeg("auto")}>
+        <T x={58.5} y={4.001} size={14} lh={22} weight={500} color={seg === "auto" ? "#191919" : "#777"}>{segAuto.label}</T>
+        <T x={136.4983} y={4.001} size={14} lh={22} weight={700} color={seg === "auto" ? "#191919" : "#777"}>{autoEvents.length}</T>
       </button>
 
       {/* 事件列表(红三角图标与分割线为 DOM,随列表淡出);manual 3 条 / auto 1 条 */}
-      {(resolved ? visibleList.filter((ev) => ev.key !== "evt-npu-linkdown") : visibleList).map((event, i) => {
-        const dimmed = seg === "manual" && bizOnly && !event.affectsBusiness;
+      <div className="ai-event-list">{visibleList.map((event, i) => {
+        const dimmed = false;
         const isAuto = seg === "auto";
         const showDivider = i < visibleList.length - 1 && !(seg === "manual" && bizOnly && !visibleList[i + 1].affectsBusiness) && !dimmed;
         return (
           <div
             key={event.key}
             className={`ai-event-row${dimmed ? " ai-event-dimmed" : ""}${selectedEvt === event.key ? " ai-event-selected" : ""}`}
-            style={{ left: 28, top: 732 + i * 72 }}
+            style={{ position:"relative", height: event.affectsBusiness ? 90 : 72, flexShrink:0 }}
             onClick={() => {
-              if (isAuto) return;
+
               setSelectedEvt(event.key);
               focusCabinet(event.focusId);
               // 只有已实现的故事提供详情入口。
@@ -288,13 +296,14 @@ export default function AiPanel() {
             ) : (
               <img className="ai-event-alert" src={`${S01}/event-alert@2x.png`} alt="" draggable={false} />
             )}
-            <T x={isAuto ? 30 : 32} y={0} size={14} lh={22} weight={500} width={340}>{event.title}</T>
+            <T x={32} y={0} size={14} lh={22} weight={500} width={340} title={event.title} style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{event.title}</T>
+            {event.affectsBusiness && <span className="ai-impact-tag">影响业务</span>}
             <T x={380} y={1} size={12} lh={20} color="#777">{event.time}</T>
-            <T x={32} y={26} size={14} lh={22} width={396} color="#777">{event.desc}</T>
-            {showDivider ? <span className="ai-event-divider" aria-hidden="true" /> : null}
+            <T x={32} y={event.affectsBusiness ? 48 : 26} size={14} lh={22} width={396} title={event.desc} style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} color="#777">{event.desc}</T>
+            {showDivider ? <span className="ai-event-divider" style={{top:"auto",bottom:6}} aria-hidden="true" /> : null}
           </div>
         );
-      })}
+      })}{!visibleList.length && <div className="ai-events-empty">{seg === "auto" ? "暂无自动处理中事项" : "暂无影响业务的待人工处理事件"}</div>}</div>
 
       {/* 底部输入框(第1批修正:全新落位,框体画布 68,1012,444×48) */}
       <input
@@ -351,7 +360,7 @@ export default function AiPanel() {
               </button>
             </div>
             <ul className="ai-drawer-list">
-              {agentEvents.drawerList.map((item) => (
+              {allEvents.map((item) => (
                 <li key={item.key} className="ai-drawer-item">
                   <div className="ai-drawer-item-top">
                     <span className="ai-drawer-item-title">{item.title}</span>

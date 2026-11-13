@@ -22,7 +22,7 @@ const LEGEND = [
 ];
 
 export default function TimelineArea() {
-  const { openDetail, resolved } = useApp();
+  const { openDetail, resolved, qwenStage, bizOnly } = useApp();
   const ticks = minuteTicks(timelineRange);
   const nowOffset = timeToMinutes(timelineRange.now) - timeToMinutes(timelineRange.start);
   // 刻度中心 x = 48 + 65.4737·i(卡内);i = nowOffset 一格由 tl-now 标签代替
@@ -38,42 +38,33 @@ export default function TimelineArea() {
       <img className="tl-img" src={`${S01}/tl-now.svg`} alt="" style={{ left: 1064, top: 70.68, width: 64, height: 41 }} />
       {/* 事件胶囊(hover 提示卡 + 点击联动左侧选中与 3D 定位) */}
       {[
-        { img: "tl-event-01.svg", x: 411, evKey: "evt-link-dirty", focusId: "A-15", tip: ["12:00:40 光链路脏污，待清污", "计算柜11 · 待人工处理"] },
-        {
-          img: "tl-event-02.svg", x: 636.84, evKey: "evt-npu-linkdown", focusId: "D-08",
-          tip: resolved
-            ? ["12:04:10 NPU网口linkdown", "SuperpodD · 计算柜08 · 影响业务 · 已闭环"]
-            : ["12:04:10 NPU网口linkdown", "SuperpodD · 计算柜08 · 影响业务 · 待人工处理"],
-        },
-      ].map((ev) => (
+        { img:"tl-figma-0.svg", x:71.55, w:84, evKey:"evt-npu-firmware", focusId:"D-08", tip:["11:55:00 NPU驱动固件版本不一致", "SuperpodD · 计算柜08 · 待人工处理"] },
+        { img:"tl-figma-0.svg", x:211.55, w:84, evKey:"evt-npu-port", focusId:"D-08", tip:["11:57:00 NPU网口linkdown", "SuperpodD · 计算柜08 · 待人工处理"] },
+        { img:"tl-figma-2.svg", x:411.07, w:93, evKey:"evt-link-dirty", storyId:"optical", focusId:"A-15", tip:["12:00:40 光链路脏污，待清污", "计算柜11 · 待人工处理"] },
+        { img:"tl-figma-1.svg", x:662.55, w:96, evKey:"evt-npu-linkdown", storyId:"qwen", focusId:"D-08", tip:["12:05:12 Qwen-1.5B服务劣化：网卡驱动版本低", "影响业务 · " + (resolved ? "已闭环" : qwenStage > 6 ? "自动处理中" : "待人工处理")] },
+      ].filter(ev => !bizOnly || ev.storyId === "qwen").map((ev) => (
         <span
-          key={ev.img}
+          key={ev.evKey}
           className="tl-event-hot"
-          style={{ left: ev.x, top: 36.6, width: ev.img.endsWith("01.svg") ? 93 : 115, height: 59 }}
+          style={{ left: ev.x, top: ev.storyId === "optical" ? 47.02 : 47.55, width: ev.w, height: 59 }}
           tabIndex={0}
           role="button"
           aria-label={ev.tip[0]}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }}
           onClick={() => {
             window.dispatchEvent(new CustomEvent("s01:event-select", { detail: { key: ev.evKey } }));
             const frame = document.querySelector(".cabinet-area-frame");
             if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: "focusCabinet", id: ev.focusId }, "*");
-            openDetail(ev.evKey === "evt-link-dirty" ? "optical" : "qwen");
+            if (ev.storyId) openDetail(ev.storyId);
           }}
         >
-          {resolved && ev.evKey === "evt-npu-linkdown" ? (
-            /* 已闭环版:灰三角 + 灰实心圆白三角 + 对勾徽标(替换红圆/手掌/八角星) */
-            <span className="tl-closed-pill" aria-hidden="true">
-              <span className="tl-closed-tri-wrap" aria-hidden="true">
-                <Icon name="triangle-alert" size="0.875rem" color="#AEAEAE" strokeWidth={1.2} />
-              </span>
-              <span className="tl-closed-circle"><span className="tl-closed-mini-tri" /></span>
-              <span className="tl-closed-badge">
-                <img src={`${S01}/lg-closed.svg`} alt="" draggable={false} />
-              </span>
+          {ev.storyId === "qwen" && qwenStage !== 6 ? (
+            <span className={"tl-single-state " + (resolved ? "closed" : "processing")} aria-hidden="true">
+              <img className="tl-single-glass" src={`${S01}/tl-figma-0.svg`} alt="" />
+              <img className="tl-state-badge" src={`${S01}/${resolved ? "lg-closed" : "lg-auto"}.svg`} alt="" />
+              {!resolved && <img className="tl-state-impact" src={`${S01}/lg-impact.svg`} alt="" />}
             </span>
-          ) : (
-            <img className="tl-img tl-event-pill" src={`${S01}/${ev.img}`} alt="" style={{ left: 0, top: 0, width: "100%", height: "100%" }} />
-          )}
+          ) : <img className="tl-img tl-event-pill" src={`${S01}/${ev.img}`} alt="" style={{ left:0, top:0, width:ev.w, height:59 }} />}
           <span className="tl-event-tip">
             <span className="tl-event-tip-title">{ev.tip[0]}</span>
             <span className="tl-event-tip-sub">{ev.tip[1]}</span>

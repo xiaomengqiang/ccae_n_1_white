@@ -1079,6 +1079,14 @@
       "sha256": "bfdadc03001816fb1d021dca6af1ef25576a058af517746de69bd6d94ac68b57",
       "sourceFile": "/Users/mac/Documents/codex/CCAE26N+1-AgentDemo/源码/home/optical-event/assets.json",
       "sourceIcon": "红色的故障"
+    },
+    {
+      "file": "f4bab.svg",
+      "bytes": 876,
+      "sha256": "346b541e878fc18b67f581ddaa7ec0a71958ebcda0847d777dde5d512a3ccdcf",
+      "sourceNodes": [
+        "I2972:107022;2084:163109"
+      ]
     }
   ]
 }

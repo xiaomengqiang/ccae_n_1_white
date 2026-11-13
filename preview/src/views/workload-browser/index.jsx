@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "../../context.jsx";
-import { INFER_SERVICES, TRAIN_JOBS } from "../../mock/workloads.js";
+import { TRAIN_JOBS, inferenceServices } from "../../mock/workloads.js";
 import "./index.css";
 
 const S02 = "./assets/uploads/s02";
 
-const STATUS_COLOR = { interrupt: "#E02128", degrade: "#F4840C", stall: "#E02128", normal: "#09AA71" };
+const STATUS_COLOR = { interrupt: "#E02128", degrade: "#C76207", stall: "#E02128", normal: "#09AA71" };
 const CARD_STYLE = {
   interrupt: { border: "#FEE7E8", bg: "linear-gradient(180deg,#FEE7E8 0%,#FFF 35%)" },
   degrade: { border: "rgba(252,206,146,.4)", bg: "linear-gradient(180deg,#FEF5E8 0%,#FFF 34%)" },
@@ -19,7 +19,7 @@ const TAG_STYLE = {
 };
 
 // —— 单张卡片 ——
-function WlCard({ item, view, selected, onClick }) {
+function WlCard({ item, view, selected, onClick, handlingText }) {
   const st = CARD_STYLE[item.status] || CARD_STYLE.normal;
   const tag = TAG_STYLE[item.status] || TAG_STYLE.normal;
   const isQwen = item.icon === "qwen";
@@ -43,8 +43,8 @@ function WlCard({ item, view, selected, onClick }) {
         <span className="wl-card-tag" style={{ background: tag.bg, color: tag.color }}>
           {{ interrupt: "中断", degrade: "劣化", stall: "卡死", normal: "正常运行" }[item.status] || "正常运行"}
         </span>
-        {item.status === "interrupt" ? (
-          <span className="wl-card-tag" style={{ background: "#FABDC1", color: "#E02128" }}>待人工处理</span>
+        {handlingText ? (
+          <span className="wl-card-tag" style={{ background: "#FABDC1", color: "#E02128" }}>{handlingText}</span>
         ) : null}
         <span className="wl-card-time">{item.time}</span>
       </div>
@@ -109,7 +109,7 @@ function WlCard({ item, view, selected, onClick }) {
 
 // —— 主区业务视图(浏览导航 + 卡片列表;home 时整体隐藏) ——
 export default function WorkloadBrowser({ filterKey }) {
-  const { view, detail, openDetail } = useApp();
+  const { qwenStage, view, detail, openDetail } = useApp();
   const [sortKey, setSortKey] = useState("status");
   const [sortOpen, setSortOpen] = useState(false);
 
@@ -118,12 +118,19 @@ export default function WorkloadBrowser({ filterKey }) {
     setSortOpen(false);
   }, [view, filterKey]);
   const [selectedCard, setSelectedCard] = useState(null);
-  const [glassTarget, setGlassTarget] = useState(null);
-  const [glass, setGlass] = useState({ first: -1, last: -1, count: 0 });
+  const [expanded, setExpanded] = useState(null);
+  const [frame, setFrame] = useState({ left: 0, width: 0 });
+  const barsRef = useRef(null);
+  const hoverRef = useRef({ x: null, locked: 0, timer: null });
+  useEffect(() => () => clearTimeout(hoverRef.current.timer), []);
+  const active = (view === "train" || view === "infer") && !detail;
+  const capacity = 4; // 当前浅色卡片布局一屏两行，每行两个
+
+  const [rangeState, setGlass] = useState({ first: -1, last: -1, count: 0 });
   const listRef = useRef(null);
 
   const items = useMemo(() => {
-    const src = view === "train" ? TRAIN_JOBS : INFER_SERVICES;
+    const src = view === "train" ? TRAIN_JOBS : inferenceServices(qwenStage);
     let arr = [...src];
     if (filterKey && filterKey !== "total") {
       arr = arr.filter((it) => {
@@ -135,51 +142,84 @@ export default function WorkloadBrowser({ filterKey }) {
       });
     }
     if (sortKey === "status") {
-      const order = { interrupt: 0, degrade: 1, stall: 2, normal: 3 };
+      const order = { interrupt: 0, stall: 1, degrade: 2, normal: 3 };
       arr.sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
+    } else if (sortKey === "quality") {
+      arr.sort((a, b) => Number(a.successRate) - Number(b.successRate));
     } else if (sortKey === "name") {
       arr.sort((a, b) => a.name.localeCompare(b.name, "zh"));
     } else if (sortKey === "npu") {
       arr.sort((a, b) => b.npuCards - a.npuCards);
     }
     return arr;
+  }, [view, filterKey, sortKey, qwenStage]);
+
+  const maxStart = Math.ceil(Math.max(0, items.length - capacity) / 2) * 2;
+  const firstIndex = Math.max(0, Math.min(rangeState.first, maxStart));
+  const glass = { first: firstIndex, last: Math.min(items.length - 1, firstIndex + capacity - 1), count: items.length };
+  useEffect(() => { setSortKey("status"); }, [view]);
+  const navigate = (index, smooth = false) => {
+    // 当前页内的对象只选中；右列对象必须向下取整定位到所在行，不能跳到下一行。
+    if (smooth && index >= glass.first && index <= glass.last) return;
+    const start = Math.max(0, Math.min(Math.floor(index / 2) * 2, maxStart));
+    listRef.current?.scrollTo({ top: start / 2 * 272, behavior: smooth && !window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "auto" });
+    if (!smooth) setGlass({ first: start, last: Math.min(items.length - 1, start + capacity - 1), count: items.length });
+  };
+
+  useEffect(() => {
+    setExpanded(null);
+    setSelectedCard(null);
+    navigate(0);
   }, [view, filterKey, sortKey]);
 
-  // 滚动时更新玻璃框与短条明暗(节流 rAF)
   useEffect(() => {
     const list = listRef.current;
-    if (!list) return undefined;
-    let raf = 0;
+    if (!list || !active) return;
     const update = () => {
-      raf = 0;
-      const els = Array.from(list.querySelectorAll(".wl-cell"));
-      const listTop = list.scrollTop;
-      const listBottom = listTop + list.clientHeight - 64; // 渐隐区不算可视
-      let first = -1, last = -1;
-      els.forEach((el, i) => {
-        const t = el.offsetTop, b = t + el.offsetHeight;
-        if (b > listTop + 8 && t < listBottom) { if (first < 0) first = i; last = i; }
-        // 短条明暗由 glass state 渲染驱动(见 wl-bars map)
-      });
-      if (els.length === 0) { setGlass({ first: -1, last: -1, count: 0 }); return; }
-      if (first >= 0 && last >= 0) setGlass({ first, last, count: els.length });
+      const first = Math.min(maxStart, Math.floor((list.scrollTop + 1) / 272) * 2);
+      setGlass({ first, last: Math.min(items.length - 1, first + capacity - 1), count: items.length });
     };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    list.addEventListener("scroll", onScroll, { passive: true });
+    list.addEventListener("scroll", update, { passive: true });
     update();
-    return () => { list.removeEventListener("scroll", onScroll); if (raf) cancelAnimationFrame(raf); };
-  }, [items]);
+    return () => list.removeEventListener("scroll", update);
+  }, [items, active, maxStart]);
 
+  // 浏览条接收滚轮/触控板输入，统一驱动列表，由列表 scroll 回推范围框。
+  useEffect(() => {
+    const rail = barsRef.current?.parentElement;
+    if (!rail || !active) return;
+    const wheel = event => {
+      const list = listRef.current;
+      if (!list || !maxStart) return;
+      event.preventDefault();
+      const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+      list.scrollBy({ top: delta * (event.deltaMode === 1 ? 20 : event.deltaMode === 2 ? list.clientHeight : 1), behavior: "auto" });
+    };
+    rail.addEventListener("wheel", wheel, { passive: false });
+    return () => rail.removeEventListener("wheel", wheel);
+  }, [active, maxStart]);
 
+  // 用短条实际位置计算玻璃框，悬浮展开时仍包住当前四个对象。
+  useEffect(() => {
+    const bars = barsRef.current;
+    if (!bars || !active) return;
+    const update = () => {
+      const first = bars.children[glass.first], last = bars.children[glass.last];
+      if (first && last) setFrame({ left: first.offsetLeft - 3, width: last.offsetLeft + last.offsetWidth - first.offsetLeft + 6 });
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(bars);
+    Array.from(bars.children).forEach(el => observer.observe(el));
+    update();
+    return () => observer.disconnect();
+  }, [glass.first, glass.last, glass.count, active, expanded]);
 
-  const active = (view === "train" || view === "infer") && !detail;
+  const labels = { interrupt: "中断", stall: "卡死", degrade: "劣化", normal: "正常运行" };
+  const handling = it => it.status === "normal" || !it.status ? "" : parseInt(it.manual) > 0 ? "待人工处理" : it.key === "svc-qwen15" && qwenStage < 9 ? "自动处理中" : "";
   const businessName = view === "train" ? "训练作业" : "推理服务";
   const filterName =
     filterKey === "interrupt" ? "中断" : filterKey === "degrade" ? "劣化" : filterKey === "stall" ? "卡死" : filterKey === "normal" ? "正常运行" : null;
 
-  const scrollBy = (dir) => {
-    if (listRef.current) listRef.current.scrollBy({ top: dir * 544, behavior: "smooth" });
-  };
 
   if (!active) return null;
 
@@ -193,12 +233,12 @@ export default function WorkloadBrowser({ filterKey }) {
           onClick={() => setSortOpen((v) => !v)}
           title="排序"
         >
-          <span>{{ status: "按状态排序", name: "按名称", npu: "按 NPU 卡数" }[sortKey]}</span>
-          <span className="wl-sort-caret" aria-hidden="true">⌄</span>
+          <span>{{ status: "按状态排序", quality: "按成功率排序", name: "按名称", npu: "按卡数排序" }[sortKey]}</span>
+          <span className="wl-sort-caret" aria-hidden="true"><img src={`${S02}/sort-chevron.svg`} alt="" /></span>
         </button>
         {sortOpen ? (
           <div className="wl-sort-menu">
-            {[["status", "按状态排序（异常在前）"], ["name", "按名称"], ["npu", "按 NPU 卡数"]].map(([k, label]) => (
+            {[["status", "按状态排序（异常在前）"], [view === "infer" ? "quality" : "name", view === "infer" ? "按成功率排序" : "按名称"], ["npu", "按卡数排序"]].map(([k, label]) => (
               <button
                 key={k}
                 type="button"
@@ -211,47 +251,51 @@ export default function WorkloadBrowser({ filterKey }) {
           </div>
         ) : null}
         <span className="wl-nav-sep" />
-        <div className="wl-bars-wrap">
-        <div className="wl-bars">
-          {items.map((it, i) => (
-            <span
-              key={it.key}
-              data-bar={it.key}
-              className={`wl-bar${i >= glass.first && i <= glass.last ? " wl-bar-visible" : ""}`}
-              style={{ background: STATUS_COLOR[it.status] || STATUS_COLOR.normal }}
-              title={it.name}
-              onClick={() => {
-                // 只滚列表容器(相对 offset 累加),绝不动页面滚动
-                const list = listRef.current;
-                const el = list?.querySelector(`[data-key="${it.key}"]`);
-                if (list && el) {
-                  let top = 0;
-                  let node = el;
-                  while (node && node !== list) { top += node.offsetTop; node = node.offsetParent; }
-                  list.scrollTo({ top: Math.max(0, top - list.clientHeight / 2 + 124), behavior: "smooth" });
-                  setSelectedCard(it.key);
-                  setGlassTarget({ top: Math.max(0, top - list.clientHeight / 2 + 124), key: it.key });
-                }
-              }}
-            />
-          ))}
-        </div>
-        {glass.count > 0 ? (
-          <span
-            className="wl-glass"
-            style={{
-              left: `calc(3px + (100% - 6px) * ${glass.first / glass.count})`,
-              width: `calc((100% - 6px) * ${(glass.last - glass.first + 1) / glass.count})`,
-            }}
-            aria-hidden="true"
-          />
-        ) : null}
+        <div className="wl-bars-wrap" onPointerLeave={() => { clearTimeout(hoverRef.current.timer); setExpanded(null); hoverRef.current = { x: null, locked: 0, timer: null }; }}>
+          <div className="wl-bars" ref={barsRef} onPointerMove={event => {
+            const prev = hoverRef.current;
+            if (prev.x !== null && Math.abs(prev.x - event.clientX) < 2) return;
+            prev.x = event.clientX;
+            if (performance.now() < prev.locked) return;
+            const current = barsRef.current.querySelector(".wl-bar-expanded");
+            const rect = current?.getBoundingClientRect();
+            if (rect && event.clientX >= rect.left - 4 && event.clientX <= rect.right + 4) return;
+            clearTimeout(prev.timer);
+            const target = event.target.closest("[data-bar]");
+            if (target && target.dataset.bar !== expanded) {
+              const key = target.dataset.bar;
+              prev.timer = setTimeout(() => { setExpanded(key); prev.locked = performance.now() + 260; }, 100);
+            }
+          }}>
+            {items.map((it, i) => (
+              <button type="button" key={it.key} data-bar={it.key}
+                className={`wl-bar${it.status && it.status !== "normal" ? " wl-bar-abnormal" : ""}${i >= glass.first && i <= glass.last ? " wl-bar-visible" : ""}${expanded === it.key ? " wl-bar-expanded" : ""}`}
+                style={{ color: STATUS_COLOR[it.status] || STATUS_COLOR.normal }}
+                aria-label={`${it.name}，${labels[it.status] || "正常运行"}${handling(it) ? "，" + handling(it) : ""}，定位卡片`}
+                onPointerDown={() => { clearTimeout(hoverRef.current.timer); hoverRef.current.locked = performance.now() + 350; }}
+                onFocus={e => { if (e.target.matches(":focus-visible")) setExpanded(it.key); }}
+                onBlur={() => setExpanded(null)}
+                onKeyDown={e => {
+                  if (["ArrowLeft", "ArrowRight"].includes(e.key)) {
+                    e.preventDefault();
+                    barsRef.current.children[Math.max(0, Math.min(items.length - 1, i + (e.key === "ArrowRight" ? 1 : -1)))].focus();
+                  }
+                }}
+                onClick={() => { navigate(i, true); setSelectedCard(it.key); }}>
+                <img className="wl-rail-icon" src={`${S02}/icon-${it.icon === "qwen" ? "qwen" : "cube"}.svg`} alt="" />
+                <span className="wl-rail-short">{it.name.slice(0, 1)}</span>
+                <span className="wl-rail-copy"><strong>{it.name}</strong><small><em className={`wl-rail-status wl-rail-status-${it.status || "normal"}`}>{labels[it.status] || "正常运行"}</em>{handling(it) && <em className={handling(it) === "待人工处理" ? "wl-rail-manual" : "wl-rail-auto"}>{handling(it)}</em>}</small></span>
+                {handling(it) === "待人工处理" && <img className="wl-rail-hand" src="./assets/uploads/s01/lg-manual.svg" alt="待人工处理" />}
+              </button>
+            ))}
+          </div>
+          {glass.count > 0 && <span className="wl-glass" style={frame} aria-hidden="true" />}
+          <input className="wl-range" type="range" min="0" max={maxStart} step="2" value={Math.max(0, glass.first)} disabled={!maxStart}
+            aria-label="浏览当前屏对象，方向键移动范围" aria-valuetext={items.length ? `第 ${glass.first + 1} 至 ${glass.last + 1} 个，共 ${items.length} 个` : "没有符合条件的对象"}
+            onChange={e => navigate(Number(e.target.value))} />
         </div>
 
-        <div className="wl-page-btns">
-          <button type="button" className="wl-page-btn" title="上一组" onClick={() => scrollBy(-1)}>‹</button>
-          <button type="button" className="wl-page-btn" title="下一组" onClick={() => scrollBy(1)}>›</button>
-        </div>
+
       </div>
 
       {/* 卡片列表 */}
@@ -270,6 +314,7 @@ export default function WorkloadBrowser({ filterKey }) {
                     item={it}
                     view={view}
                     selected={selectedCard === it.key}
+                    handlingText={handling(it)}
                     onClick={() => {
                       setSelectedCard(selectedCard === it.key ? null : it.key);
                       if (it.key === "svc-qwen15") openDetail("qwen");

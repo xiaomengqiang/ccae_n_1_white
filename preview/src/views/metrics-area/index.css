@@ -39,33 +39,40 @@
   background: rgba(0, 103, 209, 0.04);
 }
 
-/* 展开态三段容器(绝对铺满指标卡,内边距 20/32) */
+/* 展开态三段容器：上下 20，左右 40，分类间距 32。 */
 .mx-expand-wrap {
   position: absolute;
   inset: 0;
   background: #ffffff;
   border-radius: 14px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
   display: flex;
   align-items: flex-start;
-  gap: 16px;
-  padding: 20px 32px;
+  gap: 32px;
+  padding: 20px 40px;
   box-sizing: border-box;
-  animation: mx-fade-in 200ms ease-out;
+  overflow: hidden;
 }
 
-@keyframes mx-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
 
 .mx-sep {
   flex-shrink: 0;
   align-self: center;
   width: 1px;
+  margin-left: -16.5px;
+  margin-right: -16.5px;
   height: 114px;
   background: #dfdfdf;
   opacity: 0.65;
+  /* 所有状态沿用首页规则：线条到下一段标题留白 30/32px。
+     保留 flex 占位，偏移只影响线条，不改变内容与动画宽度。 */
+  transform: translateX(var(--divider-offset, 0px));
+  transition: transform 360ms cubic-bezier(.22,1,.36,1);
+}
+:is(.mx-home-wrap, .mx-expand-wrap) > .mx-sep:nth-of-type(1) { --divider-offset: -13.5px; }
+:is(.mx-home-wrap, .mx-expand-wrap) > .mx-sep:nth-of-type(2) { --divider-offset: -15.5px; }
+@media (prefers-reduced-motion: reduce) {
+  .mx-sep { transition: none; }
 }
 
 /* —— 收起摘要段(宽 156) —— */
@@ -76,7 +83,7 @@
   max-height: 114px;
   overflow: visible;
   position: relative;
-  padding-top: 20px;
+  padding-top: 0;
   box-sizing: border-box;
   cursor: pointer;
   border-radius: 8px;
@@ -84,7 +91,7 @@
 }
 
 .mx-collapsed .mt-t {
-  top: 20px;
+  top: 0;
 }
 
 .mx-collapsed:hover {
@@ -95,11 +102,11 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 62px;
-
+  top: 42px;
+  height: 72px;
   display: flex;
   gap: 12px;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .mx-mini-grid {
@@ -130,9 +137,9 @@
 .mx-collapsed-text {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
   min-width: 0;
-  padding-top: 2px;
+  padding-top: 0;
 }
 
 .mx-collapsed-line1 {
@@ -176,19 +183,15 @@
   min-width: 0;
   position: relative;
   box-sizing: border-box;
-  animation: mx-width-in 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+
 }
 
-@keyframes mx-width-in {
-  from { flex: 0 0 156px; opacity: 0.4; }
-  to { flex: 1 1 0; opacity: 1; }
-}
 
 .mx-blocks {
   position: absolute;
   left: 0;
   right: 0;
-  top: 62px;
+  top: 42px;
 
   display: flex;
   justify-content: space-between;
@@ -216,7 +219,7 @@
 }
 
 .mx-block-selected {
-  background: #e6f2fd;
+  background: transparent;
   border-color: #0067d1;
 }
 
@@ -239,6 +242,7 @@
 }
 
 .mx-block-text {
+  gap: 2px;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -257,3 +261,34 @@
   color: #191919;
   font-variant-numeric: tabular-nums;
 }
+
+/* Figma 2972:100492：异常数量与劣化图标（3055:156800）。 */
+.mt-infer-abnormal{position:absolute;left:1246px;top:71px;display:flex;align-items:baseline;gap:6px;color:#c76207;white-space:nowrap}
+.mt-infer-abnormal strong{font-size:24px;line-height:32px;font-weight:500}
+.mt-infer-abnormal span{font-size:12px;line-height:20px}
+.mt-infer-degraded{position:absolute;left:1178px;top:102px;width:24px;height:24px;background:white}
+
+.metrics-area-expanded{left:554px;top:72px;width:1342px}
+
+/* 指标段按实际宽度展开，内容裁切在自身范围内，后续段由 flex 布局推动。 */
+.mx-expand-wrap > .mx-collapsed, .mx-expand-wrap > .mx-expanded { overflow: hidden; height:114px; }
+
+.mx-home-wrap { display:flex; width:100%; height:100%; padding:20px 40px; gap:32px; box-sizing:border-box; overflow:hidden; border-radius:14px; background:white; }
+.mx-home-section { position:relative; flex-grow:0; flex-shrink:0; overflow:hidden; height:114px; }
+.mx-home-content { position:absolute; left:0; top:-20px; width:1342px; height:154px; }
+.mx-home-hot { inset:0; width:100%; height:100%; }
+
+/* Figma 2972:100494：故障数默认选中，画布坐标 590/132，152×76。 */
+.mt-fault-selected { position:absolute; left:40px; top:62px; width:148px; height:72px; padding:0; border:1.5px solid #0067d1; border-radius:8px; box-sizing:border-box; background:transparent; }
+
+/* 固定指标的内部宽度，展开只揭示内容，不挤压图标、文字和间距。 */
+.mx-blocks { width:886px; right:auto; }
+.mx-block { flex:0 0 148px; }
+/* 背景图仅保留指标图标，分隔线由同一 flex 间距内的 mx-sep 绘制。 */
+.mx-home-section:nth-of-type(1) .mt-bg { clip-path:inset(60px 392px 20px 40px); }
+.mx-home-section:nth-of-type(2) .mt-bg { clip-path:inset(60px 296px 20px 990px); }
+.mx-home-section:nth-of-type(3) .mt-bg { clip-path:inset(60px 108px 20px 1178px); }
+
+/* 最右侧摘要与首页使用相同宽度与右边界；释放空间归展开指标均分。 */
+.mx-expand-train > .mx-collapsed:last-child { width:124px; }
+.mx-expand-train .mx-blocks { width:918px; }

@@ -24,6 +24,7 @@ import CabinetArea from "./src/views/cabinet-area/index.jsx";
 import TimelineArea from "./src/views/timeline-area/index.jsx";
 import WorkloadBrowser from "./src/views/workload-browser/index.jsx";
 import DetailPanel from "./src/views/detail-panel/index.jsx";
+import QwenStory from "./src/views/qwen-story/index.jsx";
 import "./app.css";
 
 // 大屏等比缩放:设计画布固定 1920×1080,按视口整体 scale 并居中,
@@ -34,7 +35,13 @@ const DESIGN_H = 1080;
 
 // 内层页面(可使用 useApp;3D 区按视图切换隐藏态)
 function Page({ metricFilter, rootRef }) {
-  const { view, detail } = useApp();
+  const { view, detail, closeDetail, markResolved, setQwenStage } = useApp();
+  const [qwenVisited, setQwenVisited] = useState(false);
+  useEffect(() => {
+    if (detail === "qwen") setQwenVisited(true);
+    // 恢复保留的图表尺寸；首页与故事各自只缩放一次。
+    requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
+  }, [detail]);
 
   // ④ 切换视图时重置过滤为「总数」
   useEffect(() => {
@@ -42,12 +49,13 @@ function Page({ metricFilter, rootRef }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);
   return (
-    <div className="app-shell">
+    <>
+    <div className="app-shell" style={detail === "qwen" ? { visibility: "hidden", pointerEvents: "none" } : undefined} aria-hidden={detail === "qwen"}>
       <div className="app-root" ref={rootRef}>
         <TopNav />
         <div className="app-body">
           <SideNav />
-          {detail ? <DetailPanel /> : <AiPanel />}
+          {detail === "optical" ? <DetailPanel /> : <AiPanel />}
           <div className="app-main">
             <MetricsArea onFilterChange={metricFilter[1]} />
             {/* 指标卡已 absolute 到画布 (554,72),此处占位保持 flex 流高度 */}
@@ -64,6 +72,8 @@ function Page({ metricFilter, rootRef }) {
         </div>
       </div>
     </div>
+    {(detail === "qwen" || qwenVisited) && <div style={{ display: detail === "qwen" ? "contents" : "none" }}><QwenStory onBack={closeDetail} onResolved={markResolved} onStageChange={setQwenStage} /></div>}
+    </>
   );
 }
 

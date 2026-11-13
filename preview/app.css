@@ -6,7 +6,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  /* 禁止工具栏聚焦时滚动缩放容器，避免整页横向偏移。 */
+  overflow: clip;
   background: #f3f3f3;
 }
 
@@ -19,7 +20,7 @@
   width: 1920px;
   height: 1080px;
   flex: none;
-  overflow: hidden;
+  overflow: clip;
   transform-origin: center center;
   display: flex;
   flex-direction: column;
